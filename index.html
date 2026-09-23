@@ -1,0 +1,808 @@
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
+import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
+import {
+  getFirestore, doc, getDoc, runTransaction, onSnapshot, serverTimestamp
+} from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCR1TOm8fzZD92dnpsUJt7rwCkifPj1cQo",
+  authDomain: "tic-tac-nexus-31732.firebaseapp.com",
+  projectId: "tic-tac-nexus-31732",
+  storageBucket: "tic-tac-nexus-31732.firebasestorage.app",
+  messagingSenderId: "511490864392",
+  appId: "1:511490864392:web:9c867ca152e536675a28bd"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const $ = selector => document.querySelector(selector);
+
+const home = $("#home");
+const waitingScreen = $("#waitingScreen");
+const gameScreen = $("#gameScreen");
+
+const state = {
+  uid: null,
+  name: sessionStorage.getItem("nexusName") || "",
+  room: sessionStorage.getItem("nexusRoom") || "",
+  symbol: "",
+  players: [],
+  board: Array(9).fill(""),
+  turn: "X",
+  status: "waiting",
+  score: { X: 0, O: 0, draws: 0 },
+  round: 1,
+  starter: "X",
+  nextStarter: "X",
+  ready: [],
+  winningCells: [],
+  unsubscribe: null,
+  lastStartedRound: null,
+  lastResult: "",
+  sound: false
+};
+
+const ui = {
+  connection: $("#connection"),
+  name: $("#name"),
+  code: $("#code"),
+  roomCode: $("#roomCode"),
+  hint: $("#hint"),
+  slots: $("#slots"),
+  waitingMsg: $("#waitingMsg"),
+  players: $("#players"),
+  board: $("#board"),
+  turn: $("#turn"),
+  turnText: $("#turnText"),
+  message: $("#message"),
+  again: $("#again"),
+  round: $("#round"),
+  xName: $("#xName"),
+  oName: $("#oName"),
+  xScore: $("#xScore"),
+  oScore: $("#oScore"),
+  draws: $("#draws"),
+  countdown: $("#countdown"),
+  count: $("#count"),
+  toasts: $("#toasts")
+};
+
+function setScreen(screen) {
+  [home, waitingScreen, gameScreen].forEach(item => {
+    item.hidden = item !== screen;
+  });
+}
+
+function setConnection(className, text) {
+  ui.connection.className = "connection " + className;
+  ui.connection.querySelector("span").textContent = text;
+}
+
+function toast(text, type = "info") {
+  const item = document.createElement("div");
+  item.className = "toast " + type;
+  item.textContent = text;
+  ui.toasts.append(item);
+
+  setTimeout(() => {
+    item.style.opacity = "0";
+    setTimeout(() => item.remove(), 250);
+  }, 4000);
+}
+
+function roomRef(code = state.room) {
+  return doc(db, "rooms", code);
+}
+
+async function signIn() {
+  if (!auth.currentUser) {
+    const result = await signInAnonymously(auth);
+    state.uid = result.user.uid;
+  } else {
+    state.uid = auth.currentUser.uid;
+  }
+}
+
+function newRoomCode() {
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  const bytes = crypto.getRandomValues(new Uint8Array(6));
+  return [...bytes].map(byte => chars[byte % chars.length]).join("");
+}
+
+function stopListening() {
+  if (state.unsubscribe) {
+    state.unsubscribe();
+    state.unsubscribe = null;
+  }
+}
+
+function errorText(error) {
+  const messages = {
+    ROOM_NOT_FOUND: "Essa sala não existe. Confira o código.",
+    ROOM_FULL: "Essa sala já está cheia.",
+    ROOM_STARTED: "Essa partida já começou.",
+    NOT_YOUR_TURN: "Ainda não é sua vez.",
+    INVALID_MOVE: "Essa casa não está disponível.",
+    NOT_A_PLAYER: "Você não faz parte dessa sala."
+  };
+
+  if (messages[error.message]) return messages[error.message];
+
+  if (error.code === "auth/operation-not-allowed") {
+    return "Ative o login anônimo em Firebase Authentication.";
+  }
+
+  if (error.code === "permission-denied") {
+    return "Acesso negado. Confira as regras do Firestore.";
+  }
+
+  return "Não foi possível acessar o Firebase. Confira a conexão e a configuração.";
+}
+
+function subscribeRoom(code) {
+  stopListening();
+  state.room = code;
+  sessionStorage.setItem("nexusRoom", code);
+
+  state.unsubscribe = onSnapshot(roomRef(code), snapshot => {
+    if (!snapshot.exists()) {
+      stopListening();
+      state.room = "";
+      sessionStorage.removeItem("nexusRoom");
+      setScreen(home);
+      toast("A sala foi encerrada ou não existe mais.", "error");
+      return;
+    }
+
+    const previousStatus = state.status;
+    const previousRound = state.round;
+    const data = snapshot.data();
+
+    const me = Object.entries(data.players || {})
+      .find(([, player]) => player?.uid === state.uid);
+
+    if (!me) {
+      stopListening();
+      state.room = "";
+      sessionStorage.removeItem("nexusRoom");
+      setScreen(home);
+      toast("Você não faz mais parte dessa sala.", "error");
+      return;
+    }
+
+    state.symbol = me[0];
+    state.name = me[1].name;
+    state.players = Object.entries(data.players || {})
+      .filter(([, player]) => player)
+      .map(([symbol, player]) => ({ ...player, symbol }));
+    state.board = data.board || Array(9).fill("");
+    state.turn = data.currentPlayer || "X";
+    state.status = data.status || "waiting";
+    state.score = data.score || { X: 0, O: 0, draws: 0 };
+    state.round = data.round || 1;
+    state.starter = data.starter || "X";
+    state.nextStarter = data.nextStarter || "X";
+    state.ready = data.ready || [];
+    state.winningCells = data.winningCells || [];
+
+    sessionStorage.setItem("nexusName", state.name);
+    setConnection("online", "Firebase conectado");
+    renderAll();
+
+    if (state.status === "waiting") {
+      setScreen(waitingScreen);
+      renderWaiting();
+    } else {
+      setScreen(gameScreen);
+    }
+
+    if (
+      state.status === "playing" &&
+      (previousStatus !== "playing" || previousRound !== state.round) &&
+      state.lastStartedRound !== state.round
+    ) {
+      state.lastStartedRound = state.round;
+      startCountdown();
+    }
+
+    if (state.status === "finished") {
+      const resultKey = `\({state.round}:\){data.winner || "draw"}`;
+
+      if (state.lastResult !== resultKey) {
+        state.lastResult = resultKey;
+        showResult(
+          data.winner
+            ? data.winner === state.symbol ? "win" : "loss"
+            : "draw"
+        );
+      }
+    } else {
+      state.lastResult = "";
+    }
+  }, error => {
+    console.error(error);
+    setConnection("", "Erro Firebase");
+    toast("Falha ao sincronizar. Confira as regras do Firestore.", "error");
+  });
+}
+
+async function createRoom() {
+  const name = ui.name.value.trim();
+
+  if (name.length < 2 || name.length > 16) {
+    toast("Use um nome entre 2 e 16 caracteres.", "error");
+    return;
+  }
+
+  try {
+    setConnection("connecting", "Conectando Firebase");
+    await signIn();
+    state.name = name;
+
+    for (let attempt = 0; attempt < 8; attempt++) {
+      const code = newRoomCode();
+      const ref = roomRef(code);
+
+      try {
+        await runTransaction(db, async transaction => {
+          const existing = await transaction.get(ref);
+          if (existing.exists()) throw new Error("CODE_TAKEN");
+
+          transaction.set(ref, {
+            createdAt: serverTimestamp(),
+            players: {
+              X: { uid: state.uid, name },
+              O: null
+            },
+            board: Array(9).fill(""),
+            currentPlayer: "X",
+            status: "waiting",
+            round: 1,
+            starter: "X",
+            nextStarter: "X",
+            score: { X: 0, O: 0, draws: 0 },
+            ready: [],
+            winner: null,
+            winningCells: []
+          });
+        });
+
+        subscribeRoom(code);
+        setScreen(waitingScreen);
+        toast("Sala criada. Compartilhe o código!", "success");
+        return;
+      } catch (error) {
+        if (error.message !== "CODE_TAKEN") throw error;
+      }
+    }
+
+    throw new Error("Não foi possível criar um código de sala.");
+  } catch (error) {
+    console.error(error);
+    toast(errorText(error), "error");
+  }
+}
+
+async function joinRoom() {
+  const name = ui.name.value.trim();
+  const code = ui.code.value.trim().toUpperCase();
+  ui.code.value = code;
+
+  if (name.length < 2 || name.length > 16) {
+    toast("Use um nome entre 2 e 16 caracteres.", "error");
+    return;
+  }
+
+  if (!/^[A-Z0-9]{6}$/.test(code)) {
+    toast("Digite um código válido de 6 caracteres.", "error");
+    return;
+  }
+
+  try {
+    setConnection("connecting", "Entrando na sala");
+    await signIn();
+
+    await runTransaction(db, async transaction => {
+      const ref = roomRef(code);
+      const snapshot = await transaction.get(ref);
+
+      if (!snapshot.exists()) throw new Error("ROOM_NOT_FOUND");
+
+      const data = snapshot.data();
+      const players = { ...data.players };
+      const existing = Object.entries(players)
+        .find(([, player]) => player?.uid === state.uid);
+
+      if (existing) return;
+      if (data.status !== "waiting") throw new Error("ROOM_STARTED");
+
+      const symbol = players.X ? "O" : "X";
+      if (players[symbol]) throw new Error("ROOM_FULL");
+
+      players[symbol] = { uid: state.uid, name };
+
+      transaction.update(ref, {
+        players,
+        status: players.X && players.O ? "playing" : "waiting",
+        board: Array(9).fill(""),
+        currentPlayer: data.starter || "X",
+        winner: null,
+        winningCells: [],
+        ready: []
+      });
+    });
+
+    state.name = name;
+    sessionStorage.setItem("nexusName", name);
+    subscribeRoom(code);
+    toast("Entrando na sala...", "success");
+  } catch (error) {
+    console.error(error);
+    toast(errorText(error), "error");
+    setConnection("online", "Firebase conectado");
+  }
+}
+
+function renderWaiting() {
+  ui.roomCode.textContent = state.room || "------";
+  ui.slots.innerHTML = "";
+
+  ["X", "O"].forEach(symbol => {
+    const player = state.players.find(item => item.symbol === symbol);
+    const slot = document.createElement("div");
+    slot.className = "slot " + (player ? "" : "empty");
+    slot.innerHTML =
+      '<span class="symbol">' + symbol + '</span>' +
+      '<span class="slot-name"></span>';
+    slot.querySelector(".slot-name").textContent =
+      player ? player.name : "Aguardando jogador";
+    ui.slots.append(slot);
+  });
+
+  ui.waitingMsg.textContent =
+    state.players.length === 2
+      ? "Preparando a arena..."
+      : "Aguardando adversário...";
+}
+
+function renderPlayers() {
+  ui.players.innerHTML = "";
+
+  [...state.players]
+    .sort((a, b) => a.symbol.localeCompare(b.symbol))
+    .forEach(player => {
+      const item = document.createElement("div");
+      item.className =
+        "player " + (player.symbol === state.turn ? "current" : "");
+      item.innerHTML =
+        '<span class="symbol">' + player.symbol + '</span>' +
+        '<span class="player-info">' +
+          '<span class="player-name"></span>' +
+          '<span class="player-status"></span>' +
+        '</span>';
+
+      item.querySelector(".player-name").textContent =
+        player.name + (player.symbol === state.symbol ? " (você)" : "");
+      item.querySelector(".player-status").textContent =
+        player.symbol === state.turn ? "Jogando agora" : "Conectado";
+
+      ui.players.append(item);
+    });
+}
+
+function renderBoard() {
+  ui.board.innerHTML = "";
+
+  state.board.forEach((value, index) => {
+    const button = document.createElement("button");
+    button.className =
+      "cell " + (value === "X" ? "x" : value === "O" ? "o" : "");
+    button.type = "button";
+    button.setAttribute("role", "gridcell");
+    button.setAttribute(
+      "aria-label",
+      "Casa " + (index + 1) + (value ? ", ocupada por " + value : "")
+    );
+    button.disabled =
+      Boolean(value) ||
+      state.status !== "playing" ||
+      state.turn !== state.symbol;
+
+    if (value) {
+      const mark = document.createElement("span");
+      mark.className = "mark";
+      mark.textContent = value;
+      button.append(mark);
+    }
+
+    if (state.winningCells.includes(index)) {
+      button.classList.add("winner");
+    }
+
+    if (state.status === "finished" && !state.winningCells.length && value) {
+      button.classList.add("draw");
+    }
+
+    button.onclick = () => makeMove(index);
+    ui.board.append(button);
+  });
+}
+
+function renderAll() {
+  renderPlayers();
+  renderBoard();
+
+  ui.round.textContent = String(state.round).padStart(2, "0");
+  ui.xScore.textContent = state.score.X || 0;
+  ui.oScore.textContent = state.score.O || 0;
+  ui.draws.textContent = state.score.draws || 0;
+
+  ui.xName.textContent =
+    state.players.find(player => player.symbol === "X")?.name || "Jogador X";
+  ui.oName.textContent =
+    state.players.find(player => player.symbol === "O")?.name || "Jogador O";
+
+  $("#copyGame strong").textContent = state.room || "------";
+
+  const myTurn =
+    state.status === "playing" && state.turn === state.symbol;
+
+  ui.turn.classList.toggle("off", !myTurn);
+  ui.turnText.textContent =
+    myTurn
+      ? "É sua vez"
+      : state.status === "playing"
+        ? "Vez do jogador " + state.turn
+        : "Rodada encerrada";
+
+  if (state.status === "playing") {
+    ui.message.textContent =
+      myTurn ? "Faça seu movimento." : "Observe o adversário.";
+  }
+
+  ui.again.hidden = state.status !== "finished";
+  ui.again.disabled = state.ready.includes(state.uid);
+  ui.again.textContent = ui.again.disabled
+    ? "Aguardando adversário..."
+    : "Jogar novamente ↻";
+}
+
+function findWinner(board) {
+  const lines = [
+    [0,1,2],[3,4,5],[6,7,8],
+    [0,3,6],[1,4,7],[2,5,8],
+    [0,4,8],[2,4,6]
+  ];
+
+  for (const cells of lines) {
+    const [a, b, c] = cells;
+    if (board[a] && board[a] === board[b] && board[a] === board[c]) {
+      return { winner: board[a], cells };
+    }
+  }
+
+  return null;
+}
+
+async function makeMove(index) {
+  try {
+    await runTransaction(db, async transaction => {
+      const ref = roomRef();
+      const snapshot = await transaction.get(ref);
+
+      if (!snapshot.exists()) throw new Error("ROOM_NOT_FOUND");
+
+      const data = snapshot.data();
+      const player = Object.entries(data.players)
+        .find(([, entry]) => entry?.uid === state.uid);
+
+      if (!player) throw new Error("NOT_A_PLAYER");
+      if (data.status !== "playing") throw new Error("INVALID_MOVE");
+      if (data.currentPlayer !== player[0]) throw new Error("NOT_YOUR_TURN");
+      if (!Number.isInteger(index) || index < 0 || index > 8 || data.board[index]) {
+        throw new Error("INVALID_MOVE");
+      }
+
+      const board = [...data.board];
+      board[index] = player[0];
+
+      const result = findWinner(board);
+
+      if (result) {
+        transaction.update(ref, {
+          board,
+          status: "finished",
+          winner: result.winner,
+          winningCells: result.cells,
+          score: {
+            ...data.score,
+            [result.winner]: (data.score[result.winner] || 0) + 1
+          },
+          nextStarter: result.winner === "X" ? "O" : "X",
+          ready: []
+        });
+      } else if (board.every(Boolean)) {
+        transaction.update(ref, {
+          board,
+          status: "finished",
+          winner: null,
+          winningCells: [],
+          score: {
+            ...data.score,
+            draws: (data.score.draws || 0) + 1
+          },
+          nextStarter: data.starter === "X" ? "O" : "X",
+          ready: []
+        });
+      } else {
+        transaction.update(ref, {
+          board,
+          currentPlayer: player[0] === "X" ? "O" : "X"
+        });
+      }
+    });
+
+    playSound("move");
+  } catch (error) {
+    toast(errorText(error), "error");
+  }
+}
+
+async function playAgain() {
+  try {
+    await runTransaction(db, async transaction => {
+      const ref = roomRef();
+      const snapshot = await transaction.get(ref);
+
+      if (!snapshot.exists()) throw new Error("ROOM_NOT_FOUND");
+
+      const data = snapshot.data();
+      if (data.status !== "finished") return;
+
+      const players = Object.values(data.players).filter(Boolean);
+      if (players.length !== 2) throw new Error("ROOM_FULL");
+
+      const ready = [...new Set([...(data.ready || []), state.uid])];
+      const bothReady = players.every(player => ready.includes(player.uid));
+
+      if (!bothReady) {
+        transaction.update(ref, { ready });
+        return;
+      }
+
+      const starter = data.nextStarter || "X";
+
+      transaction.update(ref, {
+        board: Array(9).fill(""),
+        status: "playing",
+        round: (data.round || 1) + 1,
+        starter,
+        currentPlayer: starter,
+        nextStarter: starter === "X" ? "O" : "X",
+        winner: null,
+        winningCells: [],
+        ready: []
+      });
+    });
+  } catch (error) {
+    toast(errorText(error), "error");
+  }
+}
+
+function showResult(result) {
+  ui.message.textContent =
+    result === "win"
+      ? "Você venceu a rodada!"
+      : result === "loss"
+        ? "Boa partida — o adversário levou essa."
+        : "Empate!";
+
+  if (result === "win") makeConfetti();
+  toast(ui.message.textContent, result === "win" ? "success" : "info");
+  playSound(result);
+}
+
+function startCountdown() {
+  let number = 3;
+  ui.countdown.hidden = false;
+  ui.count.textContent = number;
+
+  const timer = setInterval(() => {
+    number--;
+
+    if (number < 1) {
+      clearInterval(timer);
+      ui.countdown.hidden = true;
+    } else {
+      ui.count.textContent = number;
+    }
+  }, 900);
+}
+
+function makeConfetti() {
+  const box = document.createElement("div");
+  box.className = "confetti";
+
+  ["#36d9ff", "#00ffe1", "#9b5cff", "#ff4f81", "#fff"].forEach(color => {
+    for (let i = 0; i < 6; i++) {
+      const piece = document.createElement("i");
+      piece.style.background = color;
+      piece.style.setProperty("--x", (Math.random() - .5) * 400 + "px");
+      piece.style.setProperty("--y", -(Math.random() * 230 + 70) + "px");
+      piece.style.setProperty("--r", (Math.random() * 700 - 350) + "deg");
+      piece.style.setProperty("--d", Math.random() * .2 + "s");
+      box.append(piece);
+    }
+  });
+
+  document.body.append(box);
+  setTimeout(() => box.remove(), 1500);
+}
+
+async function copyRoom() {
+  if (!state.room) return;
+
+  try {
+    await navigator.clipboard.writeText(state.room);
+  } catch {
+    const input = document.createElement("textarea");
+    input.value = state.room;
+    document.body.append(input);
+    input.select();
+    document.execCommand("copy");
+    input.remove();
+  }
+
+  ui.hint.textContent = "Código copiado";
+  toast("Código copiado.", "success");
+}
+
+async function leaveRoom() {
+  if (state.room && state.uid) {
+    try {
+      await runTransaction(db, async transaction => {
+        const ref = roomRef();
+        const snapshot = await transaction.get(ref);
+        if (!snapshot.exists()) return;
+
+        const data = snapshot.data();
+        const players = { ...data.players };
+        const seat = Object.keys(players)
+          .find(key => players[key]?.uid === state.uid);
+
+        if (!seat) return;
+
+        players[seat] = null;
+
+        if (!Object.values(players).some(Boolean)) {
+          transaction.delete(ref);
+        } else {
+          transaction.update(ref, {
+            players,
+            board: Array(9).fill(""),
+            status: "waiting",
+            currentPlayer: "X",
+            winner: null,
+            winningCells: [],
+            ready: []
+          });
+        }
+      });
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  if (state.unsubscribe) state.unsubscribe();
+  state.room = "";
+  state.symbol = "";
+  sessionStorage.removeItem("nexusRoom");
+  ui.countdown.hidden = true;
+  setScreen(home);
+  toast("Você saiu da sala.");
+}
+
+function playSound(type) {
+  if (!state.sound) return;
+
+  const Audio = window.AudioContext || window.webkitAudioContext;
+  if (!Audio) return;
+
+  const context = new Audio();
+  const oscillator = context.createOscillator();
+  const gain = context.createGain();
+
+  oscillator.frequency.value =
+    { move: 430, win: 780, loss: 160, draw: 280 }[type] || 360;
+
+  gain.gain.setValueAtTime(.0001, context.currentTime);
+  gain.gain.exponentialRampToValueAtTime(.05, context.currentTime + .02);
+  gain.gain.exponentialRampToValueAtTime(.0001, context.currentTime + .2);
+
+  oscillator.connect(gain);
+  gain.connect(context.destination);
+  oscillator.start();
+  oscillator.stop(context.currentTime + .25);
+}
+
+$("#createForm").onsubmit = event => {
+  event.preventDefault();
+  createRoom();
+};
+
+$("#joinForm").onsubmit = event => {
+  event.preventDefault();
+  joinRoom();
+};
+
+ui.code.oninput = () => {
+  ui.code.value = ui.code.value.replace(/[^a-z0-9]/gi, "").toUpperCase();
+};
+
+$("#copyWaiting").onclick = copyRoom;
+$("#copyGame").onclick = copyRoom;
+$("#leaveWaiting").onclick = leaveRoom;
+$("#leaveGame").onclick = leaveRoom;
+$("#again").onclick = playAgain;
+
+$("#sound").onclick = () => {
+  state.sound = !state.sound;
+  $("#sound").setAttribute("aria-pressed", state.sound);
+  $("#sound").textContent = state.sound ? "♫" : "⌁";
+  playSound("move");
+};
+
+$("#share").onclick = async () => {
+  if (!state.room) return;
+
+  if (navigator.share) {
+    try {
+      await navigator.share({
+        title: "TIC TAC NEXUS",
+        text: "Entre na minha sala: " + state.room,
+        url: location.href
+      });
+    } catch {
+      // Compartilhamento cancelado.
+    }
+  } else {
+    copyRoom();
+  }
+};
+
+async function start() {
+  try {
+    setConnection("connecting", "Conectando Firebase");
+    await signIn();
+    setConnection("online", "Firebase conectado");
+
+    if (state.room) {
+      const snapshot = await getDoc(roomRef());
+
+      if (snapshot.exists()) {
+        const data = snapshot.data();
+        const me = Object.values(data.players || {})
+          .find(player => player?.uid === state.uid);
+
+        if (me) {
+          state.name = me.name;
+          subscribeRoom(state.room);
+          return;
+        }
+      }
+
+      state.room = "";
+      sessionStorage.removeItem("nexusRoom");
+    }
+  } catch (error) {
+    console.error(error);
+    setConnection("", "Firebase indisponível");
+    toast(errorText(error), "error");
+  }
+}
+
+ui.name.value = state.name;
+start();
+</script>
