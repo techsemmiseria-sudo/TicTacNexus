@@ -2,475 +2,2951 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>TicTac Arena - Funcional</title>
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+  >
+
+  <meta name="theme-color" content="#172554">
+
+  <title>TicTac Arena — Firebase</title>
+
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; touch-action: manipulation; }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      touch-action: manipulation;
+    }
+
+    :root {
+      --bg1: #172554;
+      --bg2: #1d4ed8;
+      --cyan: #00d2ff;
+      --red: #ff6b6b;
+      --yellow: #ffd93d;
+      --green: #00ff88;
+      --white: #ffffff;
+      --glass: rgba(255,255,255,0.11);
+      --glass2: rgba(255,255,255,0.18);
+    }
+
+    html,
     body {
-      font-family: 'Segoe UI', system-ui, sans-serif;
-      background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-      color: #fff; min-height: 100vh; display: flex; align-items: center;
-      justify-content: center; padding: 20px;
+      min-height: 100%;
     }
-    .container { width: 100%; max-width: 400px; text-align: center; }
-    h1 { font-size: 2.5rem; margin-bottom: 10px; text-shadow: 0 2px 10px rgba(0,0,0,0.3); }
-    .subtitle { color: rgba(255,255,255,0.8); margin-bottom: 30px; font-size: 0.9rem; }
-    
-    .btn {
-      background: #00d2ff; border: none; color: #1e3c72;
-      padding: 16px 32px; font-size: 1rem; font-weight: bold;
-      cursor: pointer; border-radius: 50px; margin: 10px;
-      transition: all 0.3s; box-shadow: 0 4px 15px rgba(0,210,255,0.4);
-      width: 100%; max-width: 280px;
-    }
-    .btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,210,255,0.6); }
-    .btn:active { transform: translateY(0); }
-    .btn.secondary { background: rgba(255,255,255,0.2); color: #fff; }
-    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
+    body {
+      font-family:
+        "Segoe UI",
+        system-ui,
+        -apple-system,
+        BlinkMacSystemFont,
+        sans-serif;
+
+      background:
+        radial-gradient(
+          circle at top,
+          rgba(0,210,255,0.18),
+          transparent 35%
+        ),
+        linear-gradient(
+          135deg,
+          var(--bg1) 0%,
+          var(--bg2) 100%
+        );
+
+      color: var(--white);
+
+      min-height: 100vh;
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      padding: 20px;
+    }
+
+    button,
     input {
-      background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.3);
-      color: #fff; padding: 14px; font-size: 1.1rem; border-radius: 50px;
-      width: 100%; max-width: 280px; text-align: center; margin: 10px;
-    }
-    input::placeholder { color: rgba(255,255,255,0.6); }
-    input:focus { outline: none; border-color: #00d2ff; background: rgba(255,255,255,0.2); }
-
-    .codigo-box {
-      background: rgba(255,255,255,0.15); border: 3px dashed rgba(255,255,255,0.5);
-      padding: 20px; border-radius: 15px; margin: 20px 0; font-size: 2.5rem;
-      font-weight: bold; letter-spacing: 8px; cursor: pointer;
-    }
-    .codigo-box:active { transform: scale(0.95); }
-
-    .hud { display: flex; justify-content: space-around; margin: 20px 0; }
-    .placar {
-      background: rgba(255,255,255,0.1); padding: 15px 25px;
-      border-radius: 15px; min-width: 80px;
-    }
-    .placar.x { border: 2px solid #00d2ff; }
-    .placar.o { border: 2px solid #ff6b6b; }
-    .placar.emp { border: 2px solid #ffd93d; }
-    .placar-label { font-size: 0.8rem; opacity: 0.8; margin-bottom: 5px; }
-    .placar-valor { font-size: 2rem; font-weight: bold; }
-    .placar.x .placar-valor { color: #00d2ff; }
-    .placar.o .placar-valor { color: #ff6b6b; }
-    .placar.emp .placar-valor { color: #ffd93d; }
-
-    .tabuleiro {
-      display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
-      background: rgba(255,255,255,0.1); padding: 15px;
-      border-radius: 15px; margin: 20px 0;
-    }
-    .celula {
-      background: rgba(255,255,255,0.15); aspect-ratio: 1;
-      border-radius: 10px; cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 3rem; font-weight: bold; transition: all 0.2s;
-    }
-    .celula:hover:not(.ocupada) { background: rgba(255,255,255,0.25); transform: scale(1.05); }
-    .celula:active:not(.ocupada) { transform: scale(0.95); }
-    .celula.ocupada { cursor: not-allowed; opacity: 0.8; }
-    .celula.x { color: #00d2ff; }
-    .celula.o { color: #ff6b6b; }
-
-    .status {
-      font-size: 1.3rem; margin: 15px 0; padding: 10px;
-      border-radius: 10px; background: rgba(255,255,255,0.1);
+      font: inherit;
     }
 
-    .modal {
-      position: fixed; inset: 0; background: rgba(0,0,0,0.8);
-      display: none; align-items: center; justify-content: center;
-      padding: 20px; z-index: 100;
+    .container {
+      width: 100%;
+      max-width: 430px;
+      text-align: center;
     }
-    .modal.ativo { display: flex; }
-    .modal-content {
-      background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-      padding: 40px; border-radius: 20px; text-align: center;
-      box-shadow: 0 10px 40px rgba(0,0,0,0.5);
-    }
-    .modal h2 { font-size: 2.5rem; margin-bottom: 20px; }
-    .modal.vitoria h2 { color: #00d2ff; }
-    .modal.empate h2 { color: #ffd93d; }
-    .modal.derrota h2 { color: #ff6b6b; }
 
-    .alert {
-      background: rgba(255,107,107,0.2); border: 1px solid #ff6b6b;
-      padding: 12px; border-radius: 10px; margin: 10px 0;
-      font-size: 0.9rem;
+    .screen {
+      width: 100%;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    h1 {
+      font-size: clamp(2rem, 9vw, 2.8rem);
+      margin-bottom: 8px;
+      text-shadow: 0 3px 15px rgba(0,0,0,0.35);
+      letter-spacing: -1px;
+    }
+
+    .subtitle {
+      color: rgba(255,255,255,0.78);
+      margin-bottom: 25px;
+      font-size: 0.95rem;
     }
 
     .info {
-      background: rgba(0,210,255,0.1); border: 1px solid #00d2ff;
-      padding: 15px; border-radius: 10px; margin: 15px 0;
-      font-size: 0.85rem; line-height: 1.6;
+      background: rgba(0,210,255,0.09);
+      border: 1px solid rgba(0,210,255,0.55);
+      padding: 16px;
+      border-radius: 14px;
+      margin: 18px 0;
+      font-size: 0.88rem;
+      line-height: 1.7;
+      text-align: left;
     }
 
-    .hidden { display: none; }
+    .info strong {
+      color: var(--cyan);
+    }
+
+    .input {
+      display: block;
+
+      width: 100%;
+      max-width: 330px;
+
+      margin: 10px auto;
+
+      padding: 15px 20px;
+
+      border-radius: 50px;
+
+      border: 2px solid rgba(255,255,255,0.25);
+
+      background: rgba(255,255,255,0.10);
+
+      color: white;
+
+      text-align: center;
+
+      outline: none;
+
+      transition: 0.2s;
+    }
+
+    .input::placeholder {
+      color: rgba(255,255,255,0.58);
+    }
+
+    .input:focus {
+      border-color: var(--cyan);
+      background: rgba(255,255,255,0.16);
+      box-shadow: 0 0 0 4px rgba(0,210,255,0.10);
+    }
+
+    .btn {
+      display: block;
+
+      width: 100%;
+      max-width: 330px;
+
+      margin: 10px auto;
+
+      padding: 15px 22px;
+
+      border: 0;
+
+      border-radius: 50px;
+
+      background: var(--cyan);
+
+      color: #082f49;
+
+      font-weight: 800;
+
+      cursor: pointer;
+
+      box-shadow:
+        0 5px 20px rgba(0,210,255,0.28);
+
+      transition:
+        transform 0.15s,
+        box-shadow 0.15s,
+        opacity 0.15s;
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow:
+        0 8px 25px rgba(0,210,255,0.38);
+    }
+
+    .btn:active {
+      transform: translateY(0);
+    }
+
+    .btn.secondary {
+      background: rgba(255,255,255,0.14);
+      color: white;
+      box-shadow: none;
+    }
+
+    .btn.danger {
+      background: rgba(255,107,107,0.16);
+      border: 1px solid rgba(255,107,107,0.45);
+      color: white;
+      box-shadow: none;
+    }
+
+    .btn:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .divider {
+      margin: 20px 0;
+      color: rgba(255,255,255,0.45);
+      font-size: 0.8rem;
+    }
+
+    .alert {
+      background: rgba(255,107,107,0.15);
+      border: 1px solid rgba(255,107,107,0.75);
+
+      padding: 13px;
+
+      border-radius: 12px;
+
+      margin: 12px 0;
+
+      font-size: 0.88rem;
+
+      line-height: 1.45;
+    }
+
+    .success {
+      background: rgba(0,255,136,0.12);
+      border: 1px solid rgba(0,255,136,0.55);
+
+      padding: 13px;
+
+      border-radius: 12px;
+
+      margin: 12px 0;
+
+      font-size: 0.88rem;
+    }
+
+    .firebase-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+
+      margin: 10px auto 20px;
+
+      color: rgba(255,255,255,0.7);
+
+      font-size: 0.78rem;
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+
+      border-radius: 50%;
+
+      background: #999;
+
+      box-shadow: 0 0 8px currentColor;
+    }
+
+    .dot.online {
+      background: var(--green);
+      color: var(--green);
+    }
+
+    .dot.offline {
+      background: var(--red);
+      color: var(--red);
+    }
+
+    .room-card {
+      background: rgba(255,255,255,0.10);
+
+      border: 1px solid rgba(255,255,255,0.18);
+
+      padding: 22px;
+
+      border-radius: 18px;
+
+      margin: 20px 0;
+    }
+
+    .room-label {
+      color: rgba(255,255,255,0.7);
+      font-size: 0.82rem;
+      margin-bottom: 8px;
+    }
+
+    .room-code {
+      font-size: clamp(2rem, 12vw, 3.2rem);
+
+      font-weight: 900;
+
+      letter-spacing: 8px;
+
+      color: var(--cyan);
+
+      cursor: pointer;
+
+      user-select: none;
+
+      word-break: break-all;
+    }
+
+    .room-hint {
+      margin-top: 10px;
+
+      color: rgba(255,255,255,0.58);
+
+      font-size: 0.78rem;
+    }
+
+    .players {
+      display: grid;
+
+      grid-template-columns: 1fr 1fr;
+
+      gap: 10px;
+
+      margin: 18px 0;
+    }
+
+    .player-card {
+      background: var(--glass);
+
+      border-radius: 14px;
+
+      padding: 13px;
+
+      border: 1px solid rgba(255,255,255,0.12);
+    }
+
+    .player-symbol {
+      font-size: 1.5rem;
+      font-weight: 900;
+      margin-bottom: 4px;
+    }
+
+    .player-name {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 0.88rem;
+    }
+
+    .online-status {
+      font-size: 0.7rem;
+      margin-top: 5px;
+      color: rgba(255,255,255,0.6);
+    }
+
+    .x-color {
+      color: var(--cyan);
+    }
+
+    .o-color {
+      color: var(--red);
+    }
+
+    .waiting-animation {
+      margin: 18px 0;
+
+      color: var(--cyan);
+
+      font-size: 0.95rem;
+    }
+
+    .pulse {
+      animation: pulse 1.4s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% {
+        opacity: 0.5;
+      }
+
+      50% {
+        opacity: 1;
+      }
+    }
+
+    .hud {
+      display: grid;
+
+      grid-template-columns: repeat(3, 1fr);
+
+      gap: 10px;
+
+      margin: 20px 0;
+    }
+
+    .placar {
+      background: var(--glass);
+
+      padding: 12px 8px;
+
+      border-radius: 15px;
+
+      border: 2px solid transparent;
+    }
+
+    .placar.x {
+      border-color: var(--cyan);
+    }
+
+    .placar.o {
+      border-color: var(--red);
+    }
+
+    .placar.emp {
+      border-color: var(--yellow);
+    }
+
+    .placar-label {
+      font-size: 0.72rem;
+      opacity: 0.75;
+      margin-bottom: 3px;
+    }
+
+    .placar-valor {
+      font-size: 1.8rem;
+      font-weight: 900;
+    }
+
+    .placar.x .placar-valor {
+      color: var(--cyan);
+    }
+
+    .placar.o .placar-valor {
+      color: var(--red);
+    }
+
+    .placar.emp .placar-valor {
+      color: var(--yellow);
+    }
+
+    .status {
+      background: var(--glass);
+
+      padding: 13px;
+
+      border-radius: 13px;
+
+      margin: 15px 0;
+
+      font-size: 1.05rem;
+
+      font-weight: 700;
+    }
+
+    .status.my-turn {
+      background: rgba(0,210,255,0.22);
+
+      border: 1px solid rgba(0,210,255,0.5);
+
+      color: white;
+    }
+
+    .status.wait-turn {
+      color: rgba(255,255,255,0.7);
+    }
+
+    .tabuleiro {
+      display: grid;
+
+      grid-template-columns: repeat(3, 1fr);
+
+      gap: 10px;
+
+      background: rgba(255,255,255,0.08);
+
+      padding: 12px;
+
+      border-radius: 18px;
+
+      margin: 18px 0;
+    }
+
+    .celula {
+      aspect-ratio: 1;
+
+      border: 0;
+
+      border-radius: 13px;
+
+      background: rgba(255,255,255,0.13);
+
+      color: white;
+
+      font-size: clamp(2.6rem, 16vw, 4rem);
+
+      font-weight: 900;
+
+      display: flex;
+
+      align-items: center;
+
+      justify-content: center;
+
+      cursor: pointer;
+
+      transition:
+        transform 0.12s,
+        background 0.12s;
+    }
+
+    .celula:hover:not(:disabled) {
+      background: rgba(255,255,255,0.22);
+      transform: scale(1.025);
+    }
+
+    .celula:active:not(:disabled) {
+      transform: scale(0.95);
+    }
+
+    .celula:disabled {
+      cursor: not-allowed;
+    }
+
+    .celula.x {
+      color: var(--cyan);
+      text-shadow: 0 0 15px rgba(0,210,255,0.4);
+    }
+
+    .celula.o {
+      color: var(--red);
+      text-shadow: 0 0 15px rgba(255,107,107,0.4);
+    }
+
+    .room-info-bar {
+      display: flex;
+
+      align-items: center;
+
+      justify-content: space-between;
+
+      gap: 10px;
+
+      margin: 10px 0;
+
+      font-size: 0.75rem;
+
+      color: rgba(255,255,255,0.65);
+    }
+
+    .room-info-bar button {
+      border: 0;
+      background: transparent;
+      color: var(--cyan);
+      cursor: pointer;
+      font-weight: 700;
+    }
+
+    .modal {
+      position: fixed;
+
+      inset: 0;
+
+      z-index: 100;
+
+      background: rgba(0,0,0,0.78);
+
+      display: none;
+
+      align-items: center;
+
+      justify-content: center;
+
+      padding: 20px;
+    }
+
+    .modal.active {
+      display: flex;
+    }
+
+    .modal-content {
+      width: 100%;
+      max-width: 360px;
+
+      padding: 32px 22px;
+
+      border-radius: 22px;
+
+      text-align: center;
+
+      background:
+        linear-gradient(
+          135deg,
+          #172554,
+          #1d4ed8
+        );
+
+      box-shadow:
+        0 20px 70px rgba(0,0,0,0.5);
+    }
+
+    .modal h2 {
+      font-size: 2.3rem;
+      margin-bottom: 10px;
+    }
+
+    .modal-description {
+      color: rgba(255,255,255,0.75);
+      margin-bottom: 20px;
+      line-height: 1.5;
+    }
+
+    .modal.vitoria h2 {
+      color: var(--cyan);
+    }
+
+    .modal.derrota h2 {
+      color: var(--red);
+    }
+
+    .modal.empate h2 {
+      color: var(--yellow);
+    }
+
+    .loading {
+      position: fixed;
+
+      inset: 0;
+
+      background:
+        linear-gradient(
+          135deg,
+          #172554,
+          #1d4ed8
+        );
+
+      z-index: 999;
+
+      display: flex;
+
+      align-items: center;
+
+      justify-content: center;
+
+      flex-direction: column;
+
+      gap: 15px;
+    }
+
+    .spinner {
+      width: 45px;
+      height: 45px;
+
+      border: 4px solid rgba(255,255,255,0.2);
+
+      border-top-color: var(--cyan);
+
+      border-radius: 50%;
+
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    @media (max-width: 360px) {
+      body {
+        padding: 12px;
+      }
+
+      .tabuleiro {
+        gap: 7px;
+        padding: 9px;
+      }
+
+      .celula {
+        border-radius: 10px;
+      }
+    }
   </style>
 </head>
+
 <body>
-  <div class="container">
-    <!-- TELA INICIAL -->
-    <div id="tela-inicio">
+
+  <!-- CARREGAMENTO -->
+  <div id="loading" class="loading">
+    <div class="spinner"></div>
+    <strong>Conectando ao TicTac Arena...</strong>
+    <small id="loading-text">
+      Autenticando com Firebase
+    </small>
+  </div>
+
+  <main class="container">
+
+    <!-- =========================
+         INÍCIO
+    ========================== -->
+    <section id="tela-inicio" class="screen hidden">
+
       <h1>🎮 TICTAC ARENA</h1>
-      <p class="subtitle">Multiplayer Local (2 Abas)</p>
-      
+
+      <p class="subtitle">
+        Multiplayer online em tempo real
+      </p>
+
+      <div class="firebase-status">
+        <span id="firebase-dot" class="dot offline"></span>
+        <span id="firebase-status-text">
+          Conectando...
+        </span>
+      </div>
+
       <div class="info">
-        <strong>COMO JOGAR:</strong><br>
-        1. Clique em "Criar Sala"<br>
-        2. Abra uma NOVA ABA neste mesmo navegador<br>
-        3. Na nova aba, clique em "Entrar na Sala"<br>
-        4. Jogue!
+        <strong>COMO JOGAR</strong><br><br>
+
+        1. Digite seu nome.<br>
+        2. Crie uma sala ou entre usando um código.<br>
+        3. Compartilhe o código com o outro jogador.<br>
+        4. Jogue em tempo real, inclusive em outro dispositivo.
       </div>
 
-      <input type="text" id="nick1" placeholder="Nome do Jogador 1" maxlength="12">
-      <button class="btn" id="btn-criar" onclick="criarSala()">⚡ Criar Sala (Jogador X)</button>
-      
-      <div style="margin: 20px 0; opacity: 0.6;">— OU —</div>
-      
-      <input type="text" id="nick2" placeholder="Nome do Jogador 2" maxlength="12">
-      <button class="btn secondary" id="btn-entrar" onclick="entrarSala()">🚀 Entrar na Sala (Jogador O)</button>
-      
-      <div id="erro-inicio" class="alert hidden"></div>
-    </div>
+      <input
+        id="nick-criar"
+        class="input"
+        type="text"
+        placeholder="Seu nome"
+        autocomplete="nickname"
+      >
 
-    <!-- TELA LOBBY -->
-    <div id="tela-lobby" class="hidden">
+      <button
+        id="btn-criar"
+        class="btn"
+        type="button"
+      >
+        ⚡ Criar Sala
+      </button>
+
+      <div class="divider">
+        — OU —
+      </div>
+
+      <input
+        id="codigo-entrar"
+        class="input"
+        type="text"
+        placeholder="Código da sala"
+        autocomplete="off"
+        autocapitalize="characters"
+        spellcheck="false"
+      >
+
+      <input
+        id="nick-entrar"
+        class="input"
+        type="text"
+        placeholder="Seu nome"
+        autocomplete="nickname"
+      >
+
+      <button
+        id="btn-entrar"
+        class="btn secondary"
+        type="button"
+      >
+        🚀 Entrar na Sala
+      </button>
+
+      <div
+        id="erro-inicio"
+        class="alert hidden"
+      ></div>
+
+    </section>
+
+
+    <!-- =========================
+         LOBBY
+    ========================== -->
+    <section id="tela-lobby" class="screen hidden">
+
       <h1>SALA CRIADA</h1>
-      <p>Código da Sala:</p>
-      <div class="codigo-box" onclick="copiarCodigo()" title="Clique para copiar">TICTAC</div>
-      <p style="margin: 20px 0;">Agora abra uma <strong>NOVA ABA</strong> e clique em "Entrar na Sala"</p>
-      <div id="status-lobby" style="color: #00d2ff; margin: 15px 0;"> Aguardando jogador 2...</div>
-      <button class="btn secondary" onclick="cancelarSala()">Cancelar</button>
-    </div>
 
-    <!-- TELA JOGO -->
-    <div id="tela-jogo" class="hidden">
-      <h1>TICTAC ARENA</h1>
-      
+      <p class="subtitle">
+        Você é o jogador X
+      </p>
+
+      <div class="room-card">
+
+        <div class="room-label">
+          CÓDIGO DA SALA
+        </div>
+
+        <div
+          id="room-code"
+          class="room-code"
+          title="Clique para copiar"
+        >
+          --------
+        </div>
+
+        <div class="room-hint">
+          Toque no código para copiar
+        </div>
+
+      </div>
+
+      <button
+        id="btn-compartilhar"
+        class="btn"
+        type="button"
+      >
+        🔗 Compartilhar Sala
+      </button>
+
+      <div class="players">
+
+        <div class="player-card">
+
+          <div class="player-symbol x-color">
+            X
+          </div>
+
+          <div
+            id="lobby-host-name"
+            class="player-name"
+          >
+            Você
+          </div>
+
+          <div class="online-status">
+            ● Online
+          </div>
+
+        </div>
+
+        <div class="player-card">
+
+          <div class="player-symbol o-color">
+            O
+          </div>
+
+          <div
+            id="lobby-guest-name"
+            class="player-name"
+          >
+            Aguardando...
+          </div>
+
+          <div
+            id="lobby-guest-status"
+            class="online-status"
+          >
+            ● Offline
+          </div>
+
+        </div>
+
+      </div>
+
+      <div
+        id="status-lobby"
+        class="waiting-animation pulse"
+      >
+        ⏳ Aguardando o segundo jogador...
+      </div>
+
+      <button
+        id="btn-cancelar"
+        class="btn secondary"
+        type="button"
+      >
+        ← Voltar
+      </button>
+
+      <div
+        id="erro-lobby"
+        class="alert hidden"
+      ></div>
+
+    </section>
+
+
+    <!-- =========================
+         JOGO
+    ========================== -->
+    <section id="tela-jogo" class="screen hidden">
+
+      <h1>⚔️ TICTAC ARENA</h1>
+
+      <div class="room-info-bar">
+
+        <span>
+          Sala:
+          <strong id="game-room-code">
+            --------
+          </strong>
+        </span>
+
+        <button
+          id="btn-copiar-game"
+          type="button"
+        >
+          Copiar
+        </button>
+
+      </div>
+
+      <div class="players">
+
+        <div class="player-card">
+
+          <div class="player-symbol x-color">
+            X
+          </div>
+
+          <div
+            id="game-host-name"
+            class="player-name"
+          >
+            Jogador X
+          </div>
+
+          <div
+            id="game-host-online"
+            class="online-status"
+          >
+            ● Online
+          </div>
+
+        </div>
+
+        <div class="player-card">
+
+          <div class="player-symbol o-color">
+            O
+          </div>
+
+          <div
+            id="game-guest-name"
+            class="player-name"
+          >
+            Jogador O
+          </div>
+
+          <div
+            id="game-guest-online"
+            class="online-status"
+          >
+            ● Online
+          </div>
+
+        </div>
+
+      </div>
+
       <div class="hud">
+
         <div class="placar x">
-          <div class="placar-label">X</div>
-          <div class="placar-valor" id="score-x">0</div>
+          <div class="placar-label">
+            X
+          </div>
+
+          <div
+            id="score-x"
+            class="placar-valor"
+          >
+            0
+          </div>
         </div>
+
         <div class="placar emp">
-          <div class="placar-label">EMP</div>
-          <div class="placar-valor" id="score-emp">0</div>
+          <div class="placar-label">
+            EMPATES
+          </div>
+
+          <div
+            id="score-emp"
+            class="placar-valor"
+          >
+            0
+          </div>
         </div>
+
         <div class="placar o">
-          <div class="placar-label">O</div>
-          <div class="placar-valor" id="score-o">0</div>
+          <div class="placar-label">
+            O
+          </div>
+
+          <div
+            id="score-o"
+            class="placar-valor"
+          >
+            0
+          </div>
         </div>
+
       </div>
 
-      <div class="status" id="status-jogo">Preparando...</div>
-      
-      <div class="tabuleiro" id="tabuleiro">
-        <div class="celula" data-i="0"></div>
-        <div class="celula" data-i="1"></div>
-        <div class="celula" data-i="2"></div>
-        <div class="celula" data-i="3"></div>
-        <div class="celula" data-i="4"></div>
-        <div class="celula" data-i="5"></div>
-        <div class="celula" data-i="6"></div>
-        <div class="celula" data-i="7"></div>
-        <div class="celula" data-i="8"></div>
+      <div
+        id="status-jogo"
+        class="status"
+      >
+        Preparando partida...
       </div>
 
-      <button class="btn secondary" onclick="sairJogo()">🚪 Sair</button>
+      <div
+        id="tabuleiro"
+        class="tabuleiro"
+      >
+
+        <button class="celula" data-index="0"></button>
+        <button class="celula" data-index="1"></button>
+        <button class="celula" data-index="2"></button>
+
+        <button class="celula" data-index="3"></button>
+        <button class="celula" data-index="4"></button>
+        <button class="celula" data-index="5"></button>
+
+        <button class="celula" data-index="6"></button>
+        <button class="celula" data-index="7"></button>
+        <button class="celula" data-index="8"></button>
+
+      </div>
+
+      <button
+        id="btn-sair-jogo"
+        class="btn danger"
+        type="button"
+      >
+        🚪 Sair
+      </button>
+
+      <div
+        id="erro-jogo"
+        class="alert hidden"
+      ></div>
+
+    </section>
+
+  </main>
+
+
+  <!-- =========================
+       MODAL RESULTADO
+  ========================== -->
+
+  <div
+    id="modal"
+    class="modal"
+  >
+
+    <div
+      id="modal-content"
+      class="modal-content"
+    >
+
+      <h2 id="modal-titulo">
+        RESULTADO
+      </h2>
+
+      <p
+        id="modal-descricao"
+        class="modal-description"
+      >
+        Partida finalizada.
+      </p>
+
+      <button
+        id="btn-revanche"
+        class="btn"
+        type="button"
+      >
+        🔁 Revanche
+      </button>
+
+      <button
+        id="btn-fechar-modal"
+        class="btn secondary"
+        type="button"
+      >
+        Continuar
+      </button>
+
     </div>
+
   </div>
 
-  <!-- MODAL RESULTADO -->
-  <div id="modal" class="modal">
-    <div class="modal-content" id="modal-content">
-      <h2 id="modal-titulo">RESULTADO</h2>
-      <div style="margin-top: 20px;">
-        <button class="btn" onclick="revanche()" style="margin: 5px;">🔁 Revanche</button>
-        <button class="btn secondary" onclick="fecharModal()" style="margin: 5px;">🚪 Sair</button>
-      </div>
-    </div>
-  </div>
 
-  <script>
-    // === CONFIGURAÇÃO ===
-    const STORAGE_KEY = 'tictac_arena_game';
+  <!-- =========================
+       FIREBASE
+  ========================== -->
+
+  <script type="module">
+
+    /*
+     * Firebase SDK modular.
+     *
+     * A configuração abaixo é a fornecida para o projeto
+     * tictac2-11eee.
+     */
+
+    import {
+      initializeApp
+    } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
+
+    import {
+      initializeAuth,
+      inMemoryPersistence,
+      signInAnonymously,
+      onAuthStateChanged
+    } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
+
+    import {
+      getDatabase,
+      ref,
+      get,
+      set,
+      update,
+      onValue,
+      onDisconnect,
+      runTransaction
+    } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-database.js";
+
+
+    // ============================================
+    // CONFIGURAÇÃO FIREBASE
+    // ============================================
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBaSvWpKNqXn6ZaJHoLtSV0NMPZQBBf5LQ",
+      authDomain: "tictac2-11eee.firebaseapp.com",
+      databaseURL: "https://tictac2-11eee-default-rtdb.firebaseio.com",
+      projectId: "tictac2-11eee",
+      storageBucket: "tictac2-11eee.firebasestorage.app",
+      messagingSenderId: "82467678084",
+      appId: "1:82467678084:web:82f681d1d5b1ff606edfd1"
+    };
+
+
+    // ============================================
+    // FIREBASE
+    // ============================================
+
+    const app = initializeApp(firebaseConfig);
+
+    /*
+     * IMPORTANTE:
+     *
+     * inMemoryPersistence é proposital.
+     *
+     * Assim, duas abas abertas no mesmo navegador
+     * recebem identidades anônimas diferentes.
+     */
+
+    const auth = initializeAuth(app, {
+      persistence: inMemoryPersistence
+    });
+
+    const db = getDatabase(app);
+
+
+    // ============================================
+    // ESTADO DA APLICAÇÃO
+    // ============================================
+
+    let currentUser = null;
+
     let meuSimbolo = null;
-    let gameData = null;
-    let intervaloAtualizacao = null;
 
-    // === INICIALIZAÇÃO ===
-    function init() {
-      // Adicionar listeners nas células
-      document.querySelectorAll('.celula').forEach(cel => {
-        cel.addEventListener('click', () => jogar(parseInt(cel.dataset.i)));
-      });
+    let roomCode = null;
 
-      // Verificar se já existe jogo
-      const existente = localStorage.getItem(STORAGE_KEY);
-      if (existente) {
-        const dados = JSON.parse(existente);
-        if (dados.status === 'playing' || dados.status === 'finished') {
-          // Já tem jogo em andamento
-          console.log('Jogo existente detectado');
-        }
-      }
+    let roomRef = null;
 
-      // Iniciar listener de storage
-      window.addEventListener('storage', (e) => {
-        if (e.key === STORAGE_KEY) {
-          atualizarJogo();
-        }
-      });
+    let roomData = null;
+
+    let unsubscribeRoom = null;
+
+    let presenceRef = null;
+
+    let unsubscribeConnection = null;
+
+    let modalResultado = null;
+
+    let processandoJogada = false;
+
+
+    // ============================================
+    // ELEMENTOS
+    // ============================================
+
+    const $ = (id) =>
+      document.getElementById(id);
+
+
+    // ============================================
+    // UTILIDADES
+    // ============================================
+
+    function normalizarNome(nome) {
+
+      const resultado = String(nome || "")
+        .replace(/\s+/g, " ")
+        .trim();
+
+      return resultado || "Jogador";
     }
 
-    // === CRIAR SALA ===
-    function criarSala() {
-      const nick = document.getElementById('nick1').value.trim() || 'Jogador 1';
-      
-      const initialState = {
-        roomId: 'TICTAC',
-        host: nick,
-        guest: null,
-        board: Array(9).fill(null),
-        turn: 'X',
-        status: 'waiting',
-        scores: { X: 0, O: 0, empates: 0 },
-        createdAt: Date.now()
+
+    function gerarCodigoSala() {
+
+      const caracteres =
+        "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+
+      let codigo = "";
+
+      const bytes = new Uint32Array(8);
+
+      crypto.getRandomValues(bytes);
+
+      for (let i = 0; i < 8; i++) {
+
+        codigo += caracteres[
+          bytes[i] % caracteres.length
+        ];
+
+      }
+
+      return codigo;
+    }
+
+
+    function criarTabuleiroVazio() {
+
+      return {
+        "0": "",
+        "1": "",
+        "2": "",
+        "3": "",
+        "4": "",
+        "5": "",
+        "6": "",
+        "7": "",
+        "8": ""
       };
 
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(initialState));
-      
-      meuSimbolo = 'X';
-      document.getElementById('tela-inicio').classList.add('hidden');
-      document.getElementById('tela-lobby').classList.remove('hidden');
-      
-      // Iniciar verificação
-      intervaloAtualizacao = setInterval(verificarJogador2, 1000);
     }
 
-    // === ENTRAR NA SALA ===
-    function entrarSala() {
-      const nick = document.getElementById('nick2').value.trim() || 'Jogador 2';
-      const dados = localStorage.getItem(STORAGE_KEY);
-      
-      if (!dados) {
-        mostrarErro('Nenhuma sala encontrada. Crie uma sala primeiro.');
-        return;
-      }
 
-      const game = JSON.parse(dados);
-      
-      if (game.status !== 'waiting') {
-        mostrarErro('Sala já está em uso.');
-        return;
-      }
+    function criarJogoInicial() {
 
-      // Entrar na sala
-      game.guest = nick;
-      game.status = 'playing';
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(game));
-      
-      meuSimbolo = 'O';
-      document.getElementById('tela-inicio').classList.add('hidden');
-      document.getElementById('tela-jogo').classList.remove('hidden');
-      
-      // Iniciar listener
-      intervaloAtualizacao = setInterval(atualizarJogo, 500);
-      atualizarJogo();
-    }
+      return {
 
-    // === VERIFICAR JOGADOR 2 ===
-    function verificarJogador2() {
-      const dados = localStorage.getItem(STORAGE_KEY);
-      if (!dados) return;
-      
-      const game = JSON.parse(dados);
-      
-      if (game.guest) {
-        clearInterval(intervaloAtualizacao);
-        document.getElementById('status-lobby').innerHTML = '✅ Jogador 2 conectou! Iniciando...';
-        document.getElementById('status-lobby').style.color = '#00ff88';
-        
-        setTimeout(() => {
-          document.getElementById('tela-lobby').classList.add('hidden');
-          document.getElementById('tela-jogo').classList.remove('hidden');
-          intervaloAtualizacao = setInterval(atualizarJogo, 500);
-          atualizarJogo();
-        }, 1500);
-      }
-    }
+        board: criarTabuleiroVazio(),
 
-    // === ATUALIZAR JOGO ===
-    function atualizarJogo() {
-      const dados = localStorage.getItem(STORAGE_KEY);
-      if (!dados) {
-        alert('Sala foi encerrada');
-        location.reload();
-        return;
-      }
+        turn: "X",
 
-      gameData = JSON.parse(dados);
-      
-      // Atualizar placar
-      document.getElementById('score-x').textContent = gameData.scores.X;
-      document.getElementById('score-o').textContent = gameData.scores.O;
-      document.getElementById('score-emp').textContent = gameData.scores.empates;
+        status: "waiting",
 
-      // Atualizar tabuleiro
-      gameData.board.forEach((valor, i) => {
-        const cel = document.querySelector(`.celula[data-i="${i}"]`);
-        if (valor) {
-          cel.textContent = valor;
-          cel.classList.add('ocupada', valor.toLowerCase());
-        } else {
-          cel.textContent = '';
-          cel.classList.remove('ocupada', 'x', 'o');
-        }
-      });
+        winner: "",
 
-      // Atualizar status
-      if (gameData.status === 'playing') {
-        if (gameData.turn === meuSimbolo) {
-          document.getElementById('status-jogo').textContent = '🎯 SUA VEZ!';
-          document.getElementById('status-jogo').style.background = 'rgba(0,210,255,0.3)';
-          document.querySelectorAll('.celula:not(.ocupada)').forEach(c => c.style.cursor = 'pointer');
-        } else {
-          document.getElementById('status-jogo').textContent = '⏳ Aguardando oponente...';
-          document.getElementById('status-jogo').style.background = 'rgba(255,255,255,0.1)';
-          document.querySelectorAll('.celula').forEach(c => c.style.cursor = 'not-allowed');
-        }
-      }
+        scores: {
+          X: 0,
+          O: 0,
+          empates: 0
+        },
 
-      // Verificar fim de jogo
-      if (gameData.status === 'finished' && !document.getElementById('modal').classList.contains('ativo')) {
-        mostrarResultado();
-      }
-    }
+        round: 1
 
-    // === JOGAR ===
-    function jogar(index) {
-      if (!gameData || gameData.status !== 'playing') return;
-      if (gameData.turn !== meuSimbolo) return;
-      if (gameData.board[index]) return;
-
-      const novoBoard = [...gameData.board];
-      novoBoard[index] = meuSimbolo;
-      
-      const resultado = verificarVitoria(novoBoard);
-      const novoTurno = meuSimbolo === 'X' ? 'O' : 'X';
-      
-      const update = {
-        board: novoBoard,
-        turn: novoTurno
       };
 
-      if (resultado) {
-        update.status = 'finished';
-        if (resultado.vencedor === 'empate') {
-          update.scores = { ...gameData.scores, empates: gameData.scores.empates + 1 };
-        } else {
-          update.scores = { ...gameData.scores, [resultado.vencedor]: gameData.scores[resultado.vencedor] + 1 };
-        }
-      }
-
-      const novosDados = { ...gameData, ...update };
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(novosDados));
-      
-      // Disparar evento manualmente para a outra aba
-      window.dispatchEvent(new Event('storage'));
     }
 
-    // === VERIFICAR VITÓRIA ===
+
+    function mostrarTela(id) {
+
+      document
+        .querySelectorAll(".screen")
+        .forEach((tela) => {
+          tela.classList.add("hidden");
+        });
+
+      $(id).classList.remove("hidden");
+    }
+
+
+    function mostrarErro(id, mensagem) {
+
+      const elemento = $(id);
+
+      elemento.textContent = mensagem;
+
+      elemento.classList.remove("hidden");
+
+    }
+
+
+    function esconderErro(id) {
+
+      $(id).classList.add("hidden");
+
+    }
+
+
+    function firebaseMensagemErro(error) {
+
+      console.error(error);
+
+      const codigo = error?.code || "";
+
+      switch (codigo) {
+
+        case "PERMISSION_DENIED":
+          return "Firebase recusou a operação. Verifique as Security Rules.";
+
+        case "auth/operation-not-allowed":
+          return "A autenticação anônima ainda não está ativada no Firebase.";
+
+        case "auth/network-request-failed":
+          return "Falha de rede. Verifique sua conexão.";
+
+        case "database/permission-denied":
+          return "Você não possui permissão para essa operação.";
+
+        default:
+          return error?.message ||
+            "Ocorreu um erro inesperado.";
+
+      }
+
+    }
+
+
+    // ============================================
+    // ÁUDIO / FEEDBACK
+    // ============================================
+
+    function vibrar() {
+
+      if (
+        "vibrate" in navigator
+      ) {
+
+        navigator.vibrate(20);
+
+      }
+
+    }
+
+
+    // ============================================
+    // COPIAR
+    // ============================================
+
+    async function copiarTexto(texto) {
+
+      try {
+
+        await navigator.clipboard.writeText(texto);
+
+        return true;
+
+      } catch {
+
+        const textarea =
+          document.createElement("textarea");
+
+        textarea.value = texto;
+
+        textarea.style.position = "fixed";
+        textarea.style.opacity = "0";
+
+        document.body.appendChild(textarea);
+
+        textarea.select();
+
+        const sucesso =
+          document.execCommand("copy");
+
+        textarea.remove();
+
+        return sucesso;
+
+      }
+
+    }
+
+
+    async function copiarCodigo() {
+
+      if (!roomCode) return;
+
+      const sucesso =
+        await copiarTexto(roomCode);
+
+      if (sucesso) {
+
+        mostrarMensagemTemporaria(
+          "Código copiado!"
+        );
+
+      }
+
+    }
+
+
+    async function compartilharSala() {
+
+      if (!roomCode) return;
+
+      const url =
+        `${location.origin}${location.pathname}?room=${encodeURIComponent(roomCode)}`;
+
+      if (
+        navigator.share
+      ) {
+
+        try {
+
+          await navigator.share({
+            title: "TicTac Arena",
+            text: `Entre na minha sala do TicTac Arena: ${roomCode}`,
+            url
+          });
+
+          return;
+
+        } catch {
+          // usuário cancelou
+        }
+
+      }
+
+      const sucesso =
+        await copiarTexto(url);
+
+      if (sucesso) {
+
+        mostrarMensagemTemporaria(
+          "Link da sala copiado!"
+        );
+
+      }
+
+    }
+
+
+    function mostrarMensagemTemporaria(texto) {
+
+      const antiga =
+        document.querySelector(".toast");
+
+      if (antiga) antiga.remove();
+
+      const toast =
+        document.createElement("div");
+
+      toast.className = "toast";
+
+      toast.textContent = texto;
+
+      Object.assign(
+        toast.style,
+        {
+          position: "fixed",
+          left: "50%",
+          bottom: "25px",
+          transform: "translateX(-50%)",
+          background: "#020617",
+          color: "#fff",
+          padding: "12px 20px",
+          borderRadius: "999px",
+          zIndex: "1000",
+          boxShadow: "0 8px 30px rgba(0,0,0,.35)",
+          fontWeight: "700",
+          fontSize: ".85rem"
+        }
+      );
+
+      document.body.appendChild(toast);
+
+      setTimeout(() => {
+        toast.remove();
+      }, 2200);
+
+    }
+
+
+    // ============================================
+    // AUTHENTICATION
+    // ============================================
+
+    async function autenticar() {
+
+      try {
+
+        $("loading-text").textContent =
+          "Criando identidade segura...";
+
+        await signInAnonymously(auth);
+
+      } catch (error) {
+
+        console.error(error);
+
+        $("loading-text").textContent =
+          firebaseMensagemErro(error);
+
+      }
+
+    }
+
+
+    onAuthStateChanged(
+      auth,
+      (user) => {
+
+        if (!user) return;
+
+        currentUser = user;
+
+        $("firebase-dot")
+          .classList.remove("offline");
+
+        $("firebase-dot")
+          .classList.add("online");
+
+        $("firebase-status-text")
+          .textContent =
+          "Firebase conectado";
+
+        $("loading").classList.add("hidden");
+
+        $("tela-inicio")
+          .classList.remove("hidden");
+
+        verificarSalaNaURL();
+
+      }
+    );
+
+
+    // ============================================
+    // CONEXÃO REALTIME DATABASE
+    // ============================================
+
+    function observarConexao() {
+
+      const connectedRef =
+        ref(db, ".info/connected");
+
+      unsubscribeConnection =
+        onValue(
+          connectedRef,
+          (snapshot) => {
+
+            const conectado =
+              snapshot.val() === true;
+
+            $("firebase-dot")
+              .classList.toggle(
+                "online",
+                conectado
+              );
+
+            $("firebase-dot")
+              .classList.toggle(
+                "offline",
+                !conectado
+              );
+
+            $("firebase-status-text")
+              .textContent =
+              conectado
+                ? "Firebase conectado"
+                : "Reconectando...";
+
+          }
+        );
+
+    }
+
+
+    observarConexao();
+
+
+    // ============================================
+    // PRESENÇA
+    // ============================================
+
+    async function configurarPresenca() {
+
+      if (!roomRef || !meuSimbolo) return;
+
+      const lado =
+        meuSimbolo === "X"
+          ? "host"
+          : "guest";
+
+      presenceRef =
+        ref(
+          db,
+          `rooms/${roomCode}/presence/${lado}`
+        );
+
+      /*
+       * Primeiro configuramos onDisconnect.
+       * O servidor Firebase executará a remoção
+       * quando a conexão realmente cair.
+       */
+
+      try {
+
+        await onDisconnect(
+          presenceRef
+        ).remove();
+
+        await set(
+          presenceRef,
+          true
+        );
+
+      } catch (error) {
+
+        console.warn(
+          "Presença:",
+          error
+        );
+
+      }
+
+    }
+
+
+    // ============================================
+    // CRIAÇÃO DA SALA
+    // ============================================
+
+    async function criarSala() {
+
+      esconderErro("erro-inicio");
+
+      if (!currentUser) {
+
+        mostrarErro(
+          "erro-inicio",
+          "A autenticação ainda não terminou."
+        );
+
+        return;
+
+      }
+
+      const nome =
+        normalizarNome(
+          $("nick-criar").value
+        );
+
+      $("btn-criar").disabled = true;
+
+      try {
+
+        let codigo;
+
+        let referencia;
+
+        /*
+         * Gera outro código caso, por uma
+         * possibilidade extremamente pequena,
+         * já exista.
+         */
+
+        for (;;) {
+
+          codigo =
+            gerarCodigoSala();
+
+          referencia =
+            ref(
+              db,
+              `rooms/${codigo}`
+            );
+
+          const snapshot =
+            await get(referencia);
+
+          if (!snapshot.exists()) {
+            break;
+          }
+
+        }
+
+        const sala = {
+
+          players: {
+
+            host: {
+              uid: currentUser.uid,
+              name: nome
+            },
+
+            guest: null
+
+          },
+
+          presence: {
+
+            host: true,
+
+            guest: false
+
+          },
+
+          game: criarJogoInicial(),
+
+          createdAt: Date.now()
+
+        };
+
+        await set(
+          referencia,
+          sala
+        );
+
+        roomCode = codigo;
+
+        roomRef = referencia;
+
+        meuSimbolo = "X";
+
+        $("room-code").textContent =
+          roomCode;
+
+        $("lobby-host-name").textContent =
+          nome;
+
+        mostrarTela("tela-lobby");
+
+        iniciarListenerSala();
+
+        await configurarPresenca();
+
+        atualizarURL();
+
+      } catch (error) {
+
+        mostrarErro(
+          "erro-inicio",
+          firebaseMensagemErro(error)
+        );
+
+      } finally {
+
+        $("btn-criar").disabled = false;
+
+      }
+
+    }
+
+
+    // ============================================
+    // ENTRAR NA SALA
+    // ============================================
+
+    async function entrarSala() {
+
+      esconderErro("erro-inicio");
+
+      if (!currentUser) {
+
+        mostrarErro(
+          "erro-inicio",
+          "A autenticação ainda não terminou."
+        );
+
+        return;
+
+      }
+
+      const codigo =
+        $("codigo-entrar")
+          .value
+          .trim()
+          .toUpperCase();
+
+      const nome =
+        normalizarNome(
+          $("nick-entrar").value
+        );
+
+      if (!codigo) {
+
+        mostrarErro(
+          "erro-inicio",
+          "Digite o código da sala."
+        );
+
+        return;
+
+      }
+
+      $("btn-entrar").disabled = true;
+
+      try {
+
+        const referencia =
+          ref(
+            db,
+            `rooms/${codigo}`
+          );
+
+        const snapshot =
+          await get(referencia);
+
+        if (!snapshot.exists()) {
+
+          throw new Error(
+            "Sala não encontrada."
+          );
+
+        }
+
+        const sala =
+          snapshot.val();
+
+        const guest =
+          sala.players?.guest;
+
+        const guestOnline =
+          sala.presence?.guest === true;
+
+        /*
+         * Permite entrada se:
+         *
+         * 1. ainda não existe jogador O
+         * ou
+         * 2. o jogador O anterior está offline.
+         */
+
+        if (
+          guest &&
+          guest.uid !== currentUser.uid &&
+          guestOnline
+        ) {
+
+          throw new Error(
+            "Essa sala já possui dois jogadores."
+          );
+
+        }
+
+        if (
+          sala.players?.host?.uid ===
+          currentUser.uid
+        ) {
+
+          throw new Error(
+            "Você já é o jogador X desta sala."
+          );
+
+        }
+
+        const updates = {
+
+          "players/guest": {
+            uid: currentUser.uid,
+            name: nome
+          },
+
+          "presence/guest": true,
+
+          "game/status": "playing"
+
+        };
+
+        await update(
+          referencia,
+          updates
+        );
+
+        roomCode = codigo;
+
+        roomRef = referencia;
+
+        meuSimbolo = "O";
+
+        $("game-room-code").textContent =
+          codigo;
+
+        mostrarTela("tela-jogo");
+
+        iniciarListenerSala();
+
+        await configurarPresenca();
+
+        atualizarURL();
+
+      } catch (error) {
+
+        mostrarErro(
+          "erro-inicio",
+          firebaseMensagemErro(error)
+        );
+
+      } finally {
+
+        $("btn-entrar").disabled = false;
+
+      }
+
+    }
+
+
+    // ============================================
+    // LISTENER DA SALA
+    // ============================================
+
+    function iniciarListenerSala() {
+
+      if (unsubscribeRoom) {
+
+        unsubscribeRoom();
+
+        unsubscribeRoom = null;
+
+      }
+
+      if (!roomRef) return;
+
+      unsubscribeRoom =
+        onValue(
+          roomRef,
+          (snapshot) => {
+
+            if (!snapshot.exists()) {
+
+              voltarParaInicio(
+                "A sala não existe mais."
+              );
+
+              return;
+
+            }
+
+            roomData =
+              snapshot.val();
+
+            atualizarInterface();
+
+          },
+          (error) => {
+
+            console.error(error);
+
+            mostrarErro(
+              "erro-jogo",
+              firebaseMensagemErro(error)
+            );
+
+          }
+        );
+
+    }
+
+
+    // ============================================
+    // ATUALIZAR INTERFACE
+    // ============================================
+
+    function atualizarInterface() {
+
+      if (!roomData) return;
+
+      const players =
+        roomData.players || {};
+
+      const game =
+        roomData.game || criarJogoInicial();
+
+      const presence =
+        roomData.presence || {};
+
+      const host =
+        players.host || {};
+
+      const guest =
+        players.guest || {};
+
+      // ----------------------------
+      // Lobby
+      // ----------------------------
+
+      $("lobby-host-name").textContent =
+        host.name || "Jogador X";
+
+      $("lobby-guest-name").textContent =
+        guest.name || "Aguardando...";
+
+      $("lobby-guest-status").textContent =
+        guest.uid
+          ? (
+            presence.guest === true
+              ? "● Online"
+              : "● Offline"
+          )
+          : "● Aguardando";
+
+
+      // ----------------------------
+      // Jogo
+      // ----------------------------
+
+      $("game-room-code").textContent =
+        roomCode || "--------";
+
+      $("game-host-name").textContent =
+        host.name || "Jogador X";
+
+      $("game-guest-name").textContent =
+        guest.name || "Aguardando...";
+
+      $("game-host-online").textContent =
+        presence.host === true
+          ? "● Online"
+          : "● Offline";
+
+      $("game-guest-online").textContent =
+        guest.uid
+          ? (
+            presence.guest === true
+              ? "● Online"
+              : "● Offline"
+          )
+          : "● Aguardando";
+
+
+      // ----------------------------
+      // Placar
+      // ----------------------------
+
+      $("score-x").textContent =
+        game.scores?.X ?? 0;
+
+      $("score-o").textContent =
+        game.scores?.O ?? 0;
+
+      $("score-emp").textContent =
+        game.scores?.empates ?? 0;
+
+
+      // ----------------------------
+      // Tabuleiro
+      // ----------------------------
+
+      const board =
+        game.board || criarTabuleiroVazio();
+
+      document
+        .querySelectorAll(".celula")
+        .forEach((celula) => {
+
+          const index =
+            celula.dataset.index;
+
+          const valor =
+            board[index] || "";
+
+          celula.textContent =
+            valor;
+
+          celula.classList.remove(
+            "x",
+            "o"
+          );
+
+          if (valor === "X") {
+
+            celula.classList.add("x");
+
+          }
+
+          if (valor === "O") {
+
+            celula.classList.add("o");
+
+          }
+
+          const podeJogar =
+            game.status === "playing" &&
+            game.turn === meuSimbolo &&
+            !valor &&
+            !processandoJogada;
+
+          celula.disabled =
+            !podeJogar;
+
+        });
+
+
+      // ----------------------------
+      // Status
+      // ----------------------------
+
+      atualizarStatusJogo(game);
+
+
+      // ----------------------------
+      // Tela correta
+      // ----------------------------
+
+      if (
+        game.status === "waiting" &&
+        meuSimbolo === "X"
+      ) {
+
+        mostrarTela("tela-lobby");
+
+      } else if (
+        game.status === "playing" ||
+        game.status === "finished"
+      ) {
+
+        mostrarTela("tela-jogo");
+
+      }
+
+
+      // ----------------------------
+      // Resultado
+      // ----------------------------
+
+      if (
+        game.status === "finished"
+      ) {
+
+        mostrarResultadoSeNecessario(game);
+
+      }
+
+    }
+
+
+    // ============================================
+    // STATUS DO JOGO
+    // ============================================
+
+    function atualizarStatusJogo(game) {
+
+      const elemento =
+        $("status-jogo");
+
+      elemento.classList.remove(
+        "my-turn",
+        "wait-turn"
+      );
+
+      if (game.status === "waiting") {
+
+        elemento.textContent =
+          "⏳ Aguardando o jogador O...";
+
+        return;
+
+      }
+
+      if (game.status === "playing") {
+
+        if (
+          game.turn === meuSimbolo
+        ) {
+
+          elemento.textContent =
+            `🎯 SUA VEZ! Você é ${meuSimbolo}`;
+
+          elemento.classList.add(
+            "my-turn"
+          );
+
+        } else {
+
+          elemento.textContent =
+            `⏳ Vez do jogador ${game.turn}`;
+
+          elemento.classList.add(
+            "wait-turn"
+          );
+
+        }
+
+        return;
+
+      }
+
+      if (game.status === "finished") {
+
+        if (game.winner === "empate") {
+
+          elemento.textContent =
+            "🤝 Partida empatada";
+
+        } else {
+
+          elemento.textContent =
+            `🏆 ${game.winner} venceu a partida`;
+
+        }
+
+      }
+
+    }
+
+
+    // ============================================
+    // JOGAR
+    // ============================================
+
+    async function jogar(index) {
+
+      if (
+        processandoJogada ||
+        !roomRef ||
+        !roomData
+      ) {
+
+        return;
+
+      }
+
+      const game =
+        roomData.game;
+
+      if (!game) return;
+
+      if (
+        game.status !== "playing"
+      ) {
+
+        return;
+
+      }
+
+      if (
+        game.turn !== meuSimbolo
+      ) {
+
+        return;
+
+      }
+
+      const board =
+        game.board || {};
+
+      if (
+        board[String(index)]
+      ) {
+
+        return;
+
+      }
+
+      processandoJogada = true;
+
+      vibrar();
+
+      try {
+
+        const resultado =
+          await runTransaction(
+            ref(
+              db,
+              `rooms/${roomCode}/game`
+            ),
+            (atual) => {
+
+              if (!atual) {
+                return;
+              }
+
+              if (
+                atual.status !== "playing"
+              ) {
+
+                return;
+
+              }
+
+              if (
+                atual.turn !== meuSimbolo
+              ) {
+
+                return;
+
+              }
+
+              const novoBoard = {
+                ...(atual.board || criarTabuleiroVazio())
+              };
+
+              if (
+                novoBoard[String(index)]
+              ) {
+
+                return;
+
+              }
+
+              novoBoard[String(index)] =
+                meuSimbolo;
+
+              const resultado =
+                verificarVitoria(
+                  novoBoard
+                );
+
+              const proximoTurno =
+                meuSimbolo === "X"
+                  ? "O"
+                  : "X";
+
+              const novoJogo = {
+                ...atual,
+
+                board: novoBoard,
+
+                turn: proximoTurno
+
+              };
+
+              if (resultado) {
+
+                novoJogo.status =
+                  "finished";
+
+                novoJogo.winner =
+                  resultado.vencedor;
+
+                novoJogo.scores = {
+                  ...(atual.scores || {
+                    X: 0,
+                    O: 0,
+                    empates: 0
+                  })
+                };
+
+                if (
+                  resultado.vencedor ===
+                  "empate"
+                ) {
+
+                  novoJogo.scores.empates =
+                    (novoJogo.scores.empates || 0)
+                    + 1;
+
+                } else {
+
+                  novoJogo.scores[
+                    resultado.vencedor
+                  ] =
+                    (novoJogo.scores[
+                      resultado.vencedor
+                    ] || 0) + 1;
+
+                }
+
+              }
+
+              return novoJogo;
+
+            }
+          );
+
+        if (!resultado.committed) {
+
+          mostrarErro(
+            "erro-jogo",
+            "A jogada não foi aceita pelo servidor."
+          );
+
+        }
+
+      } catch (error) {
+
+        console.error(error);
+
+        mostrarErro(
+          "erro-jogo",
+          firebaseMensagemErro(error)
+        );
+
+      } finally {
+
+        processandoJogada = false;
+
+        if (roomData) {
+
+          atualizarInterface();
+
+        }
+
+      }
+
+    }
+
+
+    // ============================================
+    // VITÓRIA
+    // ============================================
+
     function verificarVitoria(board) {
+
       const linhas = [
-        [0,1,2], [3,4,5], [6,7,8],
-        [0,3,6], [1,4,7], [2,5,8],
-        [0,4,8], [2,4,6]
+
+        [0, 1, 2],
+        [3, 4, 5],
+        [6, 7, 8],
+
+        [0, 3, 6],
+        [1, 4, 7],
+        [2, 5, 8],
+
+        [0, 4, 8],
+        [2, 4, 6]
+
       ];
-      
-      for (const [a, b, c] of linhas) {
-        if (board[a] && board[a] === board[b] && board[a] === board[c]) {
-          return { vencedor: board[a] };
+
+      for (
+        const [a, b, c] of linhas
+      ) {
+
+        if (
+          board[String(a)] &&
+          board[String(a)] ===
+            board[String(b)] &&
+          board[String(a)] ===
+            board[String(c)]
+        ) {
+
+          return {
+            vencedor:
+              board[String(a)]
+          };
+
         }
+
       }
-      
-      if (board.every(c => c !== null)) {
-        return { vencedor: 'empate' };
+
+      const completo =
+        Array.from(
+          { length: 9 },
+          (_, i) =>
+            board[String(i)]
+        )
+        .every(Boolean);
+
+      if (completo) {
+
+        return {
+          vencedor: "empate"
+        };
+
       }
-      
+
       return null;
+
     }
 
-    // === MOSTRAR RESULTADO ===
-    function mostrarResultado() {
-      const modal = document.getElementById('modal');
-      const titulo = document.getElementById('modal-titulo');
-      const content = document.getElementById('modal-content');
-      
-      if (gameData.scores.X > gameData.scores.O) {
-        titulo.textContent = meuSimbolo === 'X' ? '🏆 VITÓRIA!' : '😔 DERROTA';
-        modal.className = 'modal ativo ' + (meuSimbolo === 'X' ? 'vitoria' : 'derrota');
-      } else if (gameData.scores.O > gameData.scores.X) {
-        titulo.textContent = meuSimbolo === 'O' ? ' VITÓRIA!' : '😔 DERROTA';
-        modal.className = 'modal ativo ' + (meuSimbolo === 'O' ? 'vitoria' : 'derrota');
+
+    // ============================================
+    // MODAL
+    // ============================================
+
+    function mostrarResultadoSeNecessario(game) {
+
+      const winner =
+        game.winner;
+
+      if (!winner) return;
+
+      const titulo =
+        $("modal-titulo");
+
+      const descricao =
+        $("modal-descricao");
+
+      const modal =
+        $("modal");
+
+      modal.className =
+        "modal active";
+
+      if (
+        winner === "empate"
+      ) {
+
+        titulo.textContent =
+          "🤝 EMPATE";
+
+        descricao.textContent =
+          "Ninguém venceu esta rodada.";
+
+        modal.classList.add(
+          "empate"
+        );
+
+      } else if (
+        winner === meuSimbolo
+      ) {
+
+        titulo.textContent =
+          "🏆 VITÓRIA!";
+
+        descricao.textContent =
+          `O jogador ${winner} venceu a rodada.`;
+
+        modal.classList.add(
+          "vitoria"
+        );
+
       } else {
-        titulo.textContent = ' EMPATE';
-        modal.className = 'modal ativo empate';
+
+        titulo.textContent =
+          "😔 DERROTA";
+
+        descricao.textContent =
+          `O jogador ${winner} venceu a rodada.`;
+
+        modal.classList.add(
+          "derrota"
+        );
+
       }
+
     }
 
-    // === REVANCHE ===
-    function revanche() {
-      const update = {
-        board: Array(9).fill(null),
-        turn: gameData.turn === 'X' ? 'O' : 'X',
-        status: 'playing'
-      };
-      
-      const novosDados = { ...gameData, ...update };
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(novosDados));
-      
-      document.getElementById('modal').classList.remove('ativo');
-      window.dispatchEvent(new Event('storage'));
-    }
-
-    // === UTILITÁRIOS ===
-    function copiarCodigo() {
-      navigator.clipboard.writeText('TICTAC');
-      alert('Código copiado!');
-    }
-
-    function cancelarSala() {
-      localStorage.removeItem(STORAGE_KEY);
-      location.reload();
-    }
-
-    function sairJogo() {
-      if (confirm('Deseja sair do jogo?')) {
-        localStorage.removeItem(STORAGE_KEY);
-        location.reload();
-      }
-    }
 
     function fecharModal() {
-      if (confirm('Deseja sair do jogo?')) {
-        localStorage.removeItem(STORAGE_KEY);
-        location.reload();
+
+      $("modal")
+        .classList.remove(
+          "active"
+        );
+
+    }
+
+
+    // ============================================
+    // REVANCHE
+    // ============================================
+
+    async function revanche() {
+
+      if (!roomRef) return;
+
+      try {
+
+        await runTransaction(
+          ref(
+            db,
+            `rooms/${roomCode}/game`
+          ),
+          (atual) => {
+
+            if (!atual) return;
+
+            if (
+              atual.status !==
+              "finished"
+            ) {
+
+              return;
+
+            }
+
+            /*
+             * Alterna quem começa.
+             */
+
+            const proximo =
+              atual.turn === "X"
+                ? "O"
+                : "X";
+
+            return {
+
+              ...atual,
+
+              board:
+                criarTabuleiroVazio(),
+
+              turn:
+                proximo,
+
+              status:
+                "playing",
+
+              winner:
+                "",
+
+              round:
+                (atual.round || 1) + 1
+
+            };
+
+          }
+        );
+
+        fecharModal();
+
+      } catch (error) {
+
+        console.error(error);
+
+        mostrarErro(
+          "erro-jogo",
+          firebaseMensagemErro(error)
+        );
+
       }
+
     }
 
-    function mostrarErro(msg) {
-      const erroEl = document.getElementById('erro-inicio');
-      erroEl.textContent = msg;
-      erroEl.classList.remove('hidden');
-      setTimeout(() => erroEl.classList.add('hidden'), 5000);
+
+    // ============================================
+    // SAIR
+    // ============================================
+
+    async function sairJogo() {
+
+      const confirmar =
+        confirm(
+          "Deseja realmente sair da sala?"
+        );
+
+      if (!confirmar) return;
+
+      await sairDaSala();
+
     }
 
-    // Inicializar
-    init();
+
+    async function sairDaSala() {
+
+      try {
+
+        if (
+          unsubscribeRoom
+        ) {
+
+          unsubscribeRoom();
+
+          unsubscribeRoom = null;
+
+        }
+
+        if (
+          presenceRef
+        ) {
+
+          try {
+
+            await set(
+              presenceRef,
+              false
+            );
+
+          } catch {}
+
+        }
+
+      } finally {
+
+        roomRef = null;
+
+        roomCode = null;
+
+        roomData = null;
+
+        meuSimbolo = null;
+
+        processandoJogada = false;
+
+        $("modal")
+          .classList.remove(
+            "active"
+          );
+
+        history.replaceState(
+          null,
+          "",
+          location.pathname
+        );
+
+        mostrarTela(
+          "tela-inicio"
+        );
+
+      }
+
+    }
+
+
+    // ============================================
+    // VOLTAR PARA INÍCIO
+    // ============================================
+
+    function voltarParaInicio(
+      mensagem = ""
+    ) {
+
+      if (
+        unsubscribeRoom
+      ) {
+
+        unsubscribeRoom();
+
+        unsubscribeRoom = null;
+
+      }
+
+      roomRef = null;
+      roomCode = null;
+      roomData = null;
+      meuSimbolo = null;
+
+      $("modal")
+        .classList.remove(
+          "active"
+        );
+
+      history.replaceState(
+        null,
+        "",
+        location.pathname
+      );
+
+      mostrarTela(
+        "tela-inicio"
+      );
+
+      if (mensagem) {
+
+        mostrarErro(
+          "erro-inicio",
+          mensagem
+        );
+
+      }
+
+    }
+
+
+    // ============================================
+    // URL
+    // ============================================
+
+    function atualizarURL() {
+
+      if (!roomCode) return;
+
+      const url =
+        `${location.pathname}?room=${encodeURIComponent(roomCode)}`;
+
+      history.replaceState(
+        null,
+        "",
+        url
+      );
+
+    }
+
+
+    function verificarSalaNaURL() {
+
+      const parametros =
+        new URLSearchParams(
+          location.search
+        );
+
+      const codigo =
+        parametros
+          .get("room");
+
+      if (!codigo) return;
+
+      $("codigo-entrar").value =
+        codigo
+          .trim()
+          .toUpperCase();
+
+    }
+
+
+    // ============================================
+    // EVENTOS
+    // ============================================
+
+    $("btn-criar")
+      .addEventListener(
+        "click",
+        criarSala
+      );
+
+    $("btn-entrar")
+      .addEventListener(
+        "click",
+        entrarSala
+      );
+
+    $("room-code")
+      .addEventListener(
+        "click",
+        copiarCodigo
+      );
+
+    $("btn-compartilhar")
+      .addEventListener(
+        "click",
+        compartilharSala
+      );
+
+    $("btn-copiar-game")
+      .addEventListener(
+        "click",
+        copiarCodigo
+      );
+
+    $("btn-cancelar")
+      .addEventListener(
+        "click",
+        () => voltarParaInicio()
+      );
+
+    $("btn-sair-jogo")
+      .addEventListener(
+        "click",
+        sairJogo
+      );
+
+    $("btn-revanche")
+      .addEventListener(
+        "click",
+        revanche
+      );
+
+    $("btn-fechar-modal")
+      .addEventListener(
+        "click",
+        fecharModal
+      );
+
+
+    document
+      .querySelectorAll(".celula")
+      .forEach((celula) => {
+
+        celula.addEventListener(
+          "click",
+          () => {
+
+            jogar(
+              Number(
+                celula.dataset.index
+              )
+            );
+
+          }
+        );
+
+      });
+
+
+    $("codigo-entrar")
+      .addEventListener(
+        "input",
+        (event) => {
+
+          event.target.value =
+            event.target.value
+              .toUpperCase();
+
+        }
+      );
+
+
+    $("nick-criar")
+      .addEventListener(
+        "keydown",
+        (event) => {
+
+          if (
+            event.key === "Enter"
+          ) {
+
+            criarSala();
+
+          }
+
+        }
+      );
+
+
+    $("nick-entrar")
+      .addEventListener(
+        "keydown",
+        (event) => {
+
+          if (
+            event.key === "Enter"
+          ) {
+
+            entrarSala();
+
+          }
+
+        }
+      );
+
+
+    $("codigo-entrar")
+      .addEventListener(
+        "keydown",
+        (event) => {
+
+          if (
+            event.key === "Enter"
+          ) {
+
+            entrarSala();
+
+          }
+
+        }
+      );
+
+
+    // ============================================
+    // INICIALIZAÇÃO
+    // ============================================
+
+    autenticar();
+
   </script>
+
 </body>
 </html>
