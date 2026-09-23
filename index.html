@@ -42,7 +42,6 @@
     .btn:hover { background: var(--cyan); color: var(--bg); box-shadow: 0 0 30px var(--cyan); transform: translateY(-2px); }
     .btn.magenta { border-color: var(--magenta); color: var(--magenta); }
     .btn.magenta:hover { background: var(--magenta); box-shadow: 0 0 30px var(--magenta); color: var(--bg); }
-    .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
 
     input {
       background: rgba(255,255,255,0.05); border: 2px solid var(--muted); color: var(--text);
@@ -54,7 +53,7 @@
     .codigo-sala {
       font-size: 3rem; color: var(--gold); letter-spacing: 8px;
       text-shadow: 0 0 20px var(--gold); padding: 20px 40px;
-      border: 2px dashed var(--gold); animation: pulse 2s infinite; font-weight: 900; user-select: all;
+      border: 2px dashed var(--gold); animation: pulse 2s infinite; font-weight: 900; user-select: all; cursor: pointer;
     }
     @keyframes pulse { 50% { opacity: 0.7; } }
 
@@ -125,7 +124,7 @@
   <div id="tela-lobby" class="tela">
     <h2 style="letter-spacing: 3px; font-weight: 900;">SALA CRIADA</h2>
     <p style="color: var(--muted);">Compartilhe o código com seu oponente:</p>
-    <div id="codigo-sala" class="codigo-sala">----</div>
+    <div id="codigo-sala" class="codigo-sala" title="Clique para copiar">----</div>
     <div class="info-conexao" id="status-conexao">Aguardando oponente conectar...</div>
   </div>
 
@@ -149,19 +148,20 @@
     </div>
   </div>
 
-  <!-- FIREBASE SDK (Modular) -->
+  <!-- FIREBASE SDK (Modular v10) -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getDatabase, ref, set, update, onValue, onDisconnect, get, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
     // === CONFIGURAÇÃO DO FIREBASE ===
     const firebaseConfig = {
-      apiKey: "AIzaSyDW7dMktBwC39tDt_0RBqOZ5GUNQm3OzQU",
-      authDomain: "tictacnexus-d4a8f.firebaseapp.com",
-      projectId: "tictacnexus-d4a8f",
-      storageBucket: "tictacnexus-d4a8f.firebasestorage.app",
-      messagingSenderId: "885149260979",
-      appId: "1:885149260979:web:22268a90938de1f52264c6"
+      apiKey: "AIzaSyBaSvWpKNqXn6ZaJHoLtSV0NMPZQBBf5LQ",
+      authDomain: "tictac2-11eee.firebaseapp.com",
+      databaseURL: "https://tictac2-11eee-default-rtdb.firebaseio.com",
+      projectId: "tictac2-11eee",
+      storageBucket: "tictac2-11eee.firebasestorage.app",
+      messagingSenderId: "82467678084",
+      appId: "1:82467678084:web:82f681d1d5b1ff606edfd1"
     };
 
     const app = initializeApp(firebaseConfig);
@@ -170,7 +170,7 @@
     // === ESTADO DO JOGO ===
     let currentRoomId = null;
     let mySymbol = null;
-    let gameData = null; // Espelha o estado do Firebase
+    let gameData = null;
 
     // === ELEMENTOS DOM ===
     const telaInicio = document.getElementById('tela-inicio');
@@ -190,12 +190,15 @@
     // === INICIALIZAÇÃO ===
     function criarCelulas() {
       tabuleiroEl.innerHTML = '';
-      for (let i = 0; i < 9; i++) {
-        const cel = document.createElement('div');
-        cel.className = 'celula';
-        cel.dataset.index = i;
-        cel.addEventListener('click', () => jogar(i));
-        tabuleiroEl.appendChild(cel);
+      for (let r = 0; r < 3; r++) {
+        for (let c = 0; c < 3; c++) {
+          const cel = document.createElement('div');
+          cel.className = 'celula';
+          cel.dataset.row = r;
+          cel.dataset.col = c;
+          cel.addEventListener('click', () => jogar(r, c));
+          tabuleiroEl.appendChild(cel);
+        }
       }
     }
     criarCelulas();
@@ -212,6 +215,14 @@
       tela.classList.add('ativa');
     }
 
+    // Copiar código ao clicar
+    codigoEl.addEventListener('click', () => {
+      navigator.clipboard.writeText(codigoEl.textContent);
+      const original = statusConexao.textContent;
+      statusConexao.textContent = '✅ Código copiado!';
+      setTimeout(() => statusConexao.textContent = original, 2000);
+    });
+
     // === LÓGICA DE SALA (FIREBASE) ===
     document.getElementById('btn-criar').addEventListener('click', async () => {
       const nick = document.getElementById('nick-criar').value.trim() || 'Host';
@@ -222,18 +233,17 @@
       const initialState = {
         host: nick,
         guest: null,
-        board: Array(9).fill(null),
+        board: [[null, null, null], [null, null, null], [null, null, null]],
         turn: 'X',
-        status: 'waiting', // waiting, playing, finished
+        status: 'waiting',
         winner: null,
+        winningLine: null,
         scores: { X: 0, O: 0, empates: 0 }
       };
 
       try {
         await set(ref(db, 'rooms/' + roomId), initialState);
-        
-        // Se o host sair, a sala é destruída
-        onDisconnect(ref(db, 'rooms/' + roomId)).remove();
+        onDisconnect(ref(db, 'rooms/' + roomId)).remove(); // Limpa se o host sair
 
         codigoEl.textContent = roomId;
         mostrarTela(telaLobby);
@@ -268,15 +278,12 @@
         currentRoomId = roomId;
         mySymbol = 'O';
 
-        // Atualiza o estado para 'playing' e adiciona o guest
         await update(ref(db, 'rooms/' + roomId), {
           guest: nick,
           status: 'playing'
         });
 
-        // Se o guest sair, marca como desconectado ou limpa (simplificado: remove a sala se quiser, ou apenas avisa)
         onDisconnect(ref(db, 'rooms/' + roomId + '/guest')).set(null);
-
         mostrarTela(telaJogo);
         ouvirSala(roomId);
       } catch (error) {
@@ -289,8 +296,8 @@
       onValue(ref(db, 'rooms/' + roomId), (snapshot) => {
         const data = snapshot.val();
         if (!data) {
-          if (currentRoomId) { // Se a sala foi deletada (host saiu)
-            alert('O host saiu da sala.');
+          if (currentRoomId) {
+            alert('A sala foi encerrada pelo host.');
             location.reload();
           }
           return;
@@ -299,7 +306,7 @@
         gameData = data;
 
         if (data.status === 'waiting') {
-          statusConexao.textContent = `Aguardando ${data.guest || 'oponente'}...`;
+          statusConexao.textContent = data.guest ? `Oponente (${data.guest}) conectado! Iniciando...` : 'Aguardando oponente conectar...';
         } else if (data.status === 'playing' || data.status === 'finished') {
           if (telaLobby.classList.contains('ativa')) mostrarTela(telaJogo);
           renderizarJogo(data);
@@ -309,41 +316,41 @@
 
     // === RENDERIZAÇÃO REATIVA ===
     function renderizarJogo(data) {
-      // Atualiza placar
-      placarX.textContent = data.scores.X;
-      placarO.textContent = data.scores.O;
-      placarE.textContent = data.scores.empates;
+      placarX.textContent = data.scores?.X || 0;
+      placarO.textContent = data.scores?.O || 0;
+      placarE.textContent = data.scores?.empates || 0;
 
-      // Atualiza tabuleiro (apenas células que mudaram para manter animações)
-      for (let i = 0; i < 9; i++) {
-        const cel = tabuleiroEl.children[i];
-        const valor = data.board[i];
-        const estaOcupada = cel.classList.contains('ocupada');
+      for (let r = 0; r < 3; r++) {
+        for (let c = 0; c < 3; c++) {
+          const idx = r * 3 + c;
+          const cel = tabuleiroEl.children[idx];
+          const valor = data.board[r][c];
+          const estaOcupada = cel.classList.contains('ocupada');
 
-        if (valor && !estaOcupada) {
-          cel.classList.add('ocupada');
-          cel.innerHTML = '';
-          cel.appendChild(criarSVGPeça(valor, true));
-          if (valor !== mySymbol) tocarClick(); // Som apenas da jogada do oponente
-        } else if (!valor && estaOcupada) {
-          cel.classList.remove('ocupada');
-          cel.innerHTML = '';
+          if (valor && !estaOcupada) {
+            cel.classList.add('ocupada');
+            cel.innerHTML = '';
+            cel.appendChild(criarSVGPeça(valor, true));
+            if (valor !== mySymbol) tocarClick();
+          } else if (!valor && estaOcupada) {
+            cel.classList.remove('ocupada');
+            cel.innerHTML = '';
+          }
         }
       }
 
-      // Destaca vitória
       document.querySelectorAll('.celula').forEach(c => c.classList.remove('vencedora'));
       if (data.status === 'finished' && data.winningLine) {
-        data.winningLine.forEach(idx => {
-          tabuleiroEl.children[idx].classList.add('vencedora');
+        data.winningLine.forEach(([r, c]) => {
+          tabuleiroEl.children[r * 3 + c].classList.add('vencedora');
         });
-        if (!modal.classList.contains('ativo')) {
+        if (!modal.classList.contains('ativo') && !window.modalMostrado) {
+          window.modalMostrado = true;
           explodirParticulas();
           setTimeout(mostrarModalFim, 1000);
         }
       }
 
-      // Atualiza status
       if (data.status === 'playing') {
         if (data.turn === mySymbol) {
           statusEl.textContent = '🎯 SUA VEZ';
@@ -358,29 +365,27 @@
     }
 
     // === AÇÃO DE JOGAR ===
-    function jogar(index) {
+    function jogar(row, col) {
       if (!gameData || gameData.status !== 'playing') return;
       if (gameData.turn !== mySymbol) return;
-      if (gameData.board[index] !== null) return;
+      if (gameData.board[row][col] !== null) return;
 
-      // Copia o tabuleiro e atualiza localmente para resposta instantânea (opcional, mas bom para UX)
-      const novoBoard = [...gameData.board];
-      novoBoard[index] = mySymbol;
+      const novoBoard = gameData.board.map(r => [...r]);
+      novoBoard[row][col] = mySymbol;
       const proximoTurno = mySymbol === 'X' ? 'O' : 'X';
 
-      // Verifica vitória localmente antes de enviar (ou deixa o servidor/Firebase rules fazerem, mas aqui fazemos no client para simplicidade)
       const resultado = verificarVitoria(novoBoard);
-      
-      const atualizacao = {
-        board: novoBoard,
-        turn: proximoTurno
-      };
+      const atualizacao = { board: novoBoard, turn: proximoTurno };
 
       if (resultado) {
         atualizacao.status = 'finished';
         atualizacao.winner = resultado.vencedor;
         atualizacao.winningLine = resultado.linha;
-        atualizacao[`scores/${resultado.vencedor === 'empate' ? 'empates' : resultado.vencedor}`] = gameData.scores[resultado.vencedor === 'empate' ? 'empates' : resultado.vencedor] + 1;
+        if (resultado.vencedor === 'empate') {
+          atualizacao['scores/empates'] = (gameData.scores.empates || 0) + 1;
+        } else {
+          atualizacao[`scores/${resultado.vencedor}`] = (gameData.scores[resultado.vencedor] || 0) + 1;
+        }
       }
 
       update(ref(db, 'rooms/' + currentRoomId), atualizacao);
@@ -388,17 +393,17 @@
 
     function verificarVitoria(board) {
       const linhas = [
-        [0,1,2], [3,4,5], [6,7,8],
-        [0,3,6], [1,4,7], [2,5,8],
-        [0,4,8], [2,4,6]
+        [[0,0],[0,1],[0,2]], [[1,0],[1,1],[1,2]], [[2,0],[2,1],[2,2]],
+        [[0,0],[1,0],[2,0]], [[0,1],[1,1],[2,1]], [[0,2],[1,2],[2,2]],
+        [[0,0],[1,1],[2,2]], [[0,2],[1,1],[2,0]]
       ];
       for (const combo of linhas) {
         const [a, b, c] = combo;
-        if (board[a] && board[a] === board[b] && board[a] === board[c]) {
-          return { vencedor: board[a], linha: combo };
+        if (board[a[0]][a[1]] && board[a[0]][a[1]] === board[b[0]][b[1]] && board[a[0]][a[1]] === board[c[0]][c[1]]) {
+          return { vencedor: board[a[0]][a[1]], linha: combo };
         }
       }
-      if (board.every(c => c !== null)) return { vencedor: 'empate', linha: null };
+      if (board.every(r => r.every(c => c !== null))) return { vencedor: 'empate', linha: null };
       return null;
     }
 
@@ -419,18 +424,33 @@
     // === REVANCHE ===
     document.getElementById('btn-revanche').addEventListener('click', () => {
       modal.classList.remove('ativo');
+      window.modalMostrado = false;
+      
       update(ref(db, 'rooms/' + currentRoomId), {
-        board: Array(9).fill(null),
-        turn: gameData.turn === 'X' ? 'O' : 'X', // Alterna quem começa
+        board: [[null,null,null],[null,null,null],[null,null,null]],
+        turn: gameData.turn === 'X' ? 'O' : 'X',
         status: 'playing',
         winner: null,
         winningLine: null
       });
     });
 
+    // === SAIR ===
     document.getElementById('btn-sair').addEventListener('click', () => {
       if (currentRoomId) {
-        remove(ref(db, 'rooms/' + currentRoomId));
+        if (mySymbol === 'X') {
+          remove(ref(db, 'rooms/' + currentRoomId)); // Host destrói a sala
+        } else {
+          // Guest apenas sai, liberando a vaga
+          update(ref(db, 'rooms/' + currentRoomId), {
+            guest: null,
+            status: 'waiting',
+            board: [[null,null,null],[null,null,null],[null,null,null]],
+            turn: 'X',
+            winner: null,
+            winningLine: null
+          });
+        }
       }
       location.reload();
     });
