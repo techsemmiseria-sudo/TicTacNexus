@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TicTac Arena - Firebase Multiplayer</title>
+  <title>TicTac Arena - Firebase</title>
   <style>
     :root {
       --bg: #0a0a14; --bg-2: #12122a; --cyan: #00f0ff; --magenta: #ff2bd6;
@@ -24,12 +24,12 @@
     }
     @keyframes gridMove { from { background-position: 0 0; } to { background-position: 40px 40px; } }
 
-    .tela { display: none; flex-direction: column; align-items: center; gap: 24px; padding: 20px; animation: fadeIn 0.5s ease; }
+    .tela { display: none; flex-direction: column; align-items: center; gap: 24px; padding: 20px; animation: fadeIn 0.5s ease; width: 100%; max-width: 500px; }
     .tela.ativa { display: flex; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: none; } }
 
     h1 {
-      font-size: clamp(2rem, 6vw, 3.5rem);
+      font-size: clamp(2rem, 6vw, 3.5rem); text-align: center;
       background: linear-gradient(90deg, var(--cyan), var(--magenta));
       -webkit-background-clip: text; background-clip: text; color: transparent;
       letter-spacing: 4px; text-shadow: 0 0 40px rgba(0,240,255,0.3); font-weight: 900;
@@ -37,7 +37,7 @@
     .btn {
       background: transparent; border: 2px solid var(--cyan); color: var(--cyan);
       padding: 14px 32px; font-size: 1rem; letter-spacing: 2px; cursor: pointer;
-      transition: all 0.3s; text-transform: uppercase; font-weight: 600;
+      transition: all 0.3s; text-transform: uppercase; font-weight: 600; width: 100%; max-width: 250px;
     }
     .btn:hover { background: var(--cyan); color: var(--bg); box-shadow: 0 0 30px var(--cyan); transform: translateY(-2px); }
     .btn.magenta { border-color: var(--magenta); color: var(--magenta); }
@@ -46,20 +46,21 @@
     input {
       background: rgba(255,255,255,0.05); border: 2px solid var(--muted); color: var(--text);
       padding: 12px 18px; font-size: 1.2rem; letter-spacing: 4px; text-align: center;
-      text-transform: uppercase; width: 220px; transition: all 0.3s;
+      text-transform: uppercase; width: 100%; max-width: 250px; transition: all 0.3s;
     }
     input:focus { outline: none; border-color: var(--cyan); box-shadow: 0 0 20px rgba(0,240,255,0.3); }
 
     .codigo-sala {
       font-size: 3rem; color: var(--gold); letter-spacing: 8px;
       text-shadow: 0 0 20px var(--gold); padding: 20px 40px;
-      border: 2px dashed var(--gold); animation: pulse 2s infinite; font-weight: 900; user-select: all; cursor: pointer;
+      border: 2px dashed var(--gold); animation: pulse 2s infinite; font-weight: 900; 
+      user-select: all; cursor: pointer; text-align: center;
     }
     @keyframes pulse { 50% { opacity: 0.7; } }
 
     .tabuleiro {
       display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
-      width: min(90vw, 400px); aspect-ratio: 1; padding: 12px;
+      width: min(90vw, 350px); aspect-ratio: 1; padding: 12px;
       background: rgba(0,0,0,0.4); border: 2px solid rgba(0,240,255,0.3);
       border-radius: 12px; box-shadow: 0 0 60px rgba(0,240,255,0.15), inset 0 0 30px rgba(0,0,0,0.5);
     }
@@ -80,7 +81,7 @@
     .celula.vencedora .peca { filter: drop-shadow(0 0 20px var(--gold)) drop-shadow(0 0 40px var(--gold)); }
     @keyframes shake { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-8px) rotate(-2deg); } 75% { transform: translateX(8px) rotate(2deg); } }
 
-    .hud { display: flex; justify-content: space-between; width: min(90vw, 400px); gap: 12px; }
+    .hud { display: flex; justify-content: space-between; width: min(90vw, 350px); gap: 12px; }
     .placar-item { flex: 1; text-align: center; padding: 10px; border-radius: 8px; background: rgba(255,255,255,0.03); }
     .placar-item.X { border: 1px solid var(--cyan); }
     .placar-item.O { border: 1px solid var(--magenta); }
@@ -91,13 +92,13 @@
     .placar-item.O .valor { color: var(--magenta); text-shadow: 0 0 10px var(--magenta); }
     .placar-item.E .valor { color: var(--amber); }
 
-    .status { font-size: 1.1rem; letter-spacing: 2px; min-height: 30px; font-weight: 600; }
-    .erro { color: #ff5577; font-size: 0.9rem; min-height: 20px; }
-    .info-conexao { background: rgba(0,240,255,0.1); border: 1px solid var(--cyan); padding: 10px 20px; border-radius: 8px; font-size: 0.9rem; color: var(--cyan); text-align: center; }
+    .status { font-size: 1.1rem; letter-spacing: 2px; min-height: 30px; font-weight: 600; text-align: center; }
+    .erro { color: #ff5577; font-size: 0.9rem; min-height: 20px; text-align: center; font-weight: bold; }
+    .info-conexao { background: rgba(0,240,255,0.1); border: 1px solid var(--cyan); padding: 12px 20px; border-radius: 8px; font-size: 0.9rem; color: var(--cyan); text-align: center; width: 100%; }
 
     .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center; z-index: 100; animation: fadeIn 0.3s; }
     .modal.ativo { display: flex; }
-    .modal-conteudo { background: var(--bg-2); border: 2px solid var(--cyan); padding: 40px; border-radius: 16px; text-align: center; box-shadow: 0 0 80px rgba(0,240,255,0.4); animation: popIn 0.5s cubic-bezier(.17,.67,.35,1.5); }
+    .modal-conteudo { background: var(--bg-2); border: 2px solid var(--cyan); padding: 40px; border-radius: 16px; text-align: center; box-shadow: 0 0 80px rgba(0,240,255,0.4); animation: popIn 0.5s cubic-bezier(.17,.67,.35,1.5); max-width: 90%; }
     @keyframes popIn { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
     .modal h2 { font-size: 2.5rem; margin-bottom: 20px; letter-spacing: 4px; font-weight: 900; }
     .modal h2.vitoria { background: linear-gradient(90deg, var(--gold), var(--amber)); -webkit-background-clip: text; background-clip: text; color: transparent; }
@@ -111,19 +112,19 @@
 
   <div id="tela-inicio" class="tela ativa">
     <h1>TICTAC ARENA</h1>
-    <p style="color: var(--muted); letter-spacing: 2px;">MULTIPLAYER • FIREBASE REALTIME</p>
+    <p style="color: var(--muted); letter-spacing: 2px; text-align: center;">MULTIPLAYER • FIREBASE REALTIME</p>
     <input type="text" id="nick-criar" placeholder="Seu nickname" maxlength="12">
     <button class="btn" id="btn-criar">⚡ Criar Sala</button>
-    <div style="height: 20px;"></div>
+    <div style="height: 10px;"></div>
     <input type="text" id="nick-entrar" placeholder="Seu nickname" maxlength="12">
-    <input type="text" id="codigo-input" placeholder="Código da sala" maxlength="4">
-    <button class="btn magenta" id="btn-entrar">🚀 Entrar</button>
+    <input type="text" id="codigo-input" placeholder="CÓDIGO (4 letras)" maxlength="4">
+    <button class="btn magenta" id="btn-entrar">🚀 Entrar na Sala</button>
     <div id="erro" class="erro"></div>
   </div>
 
   <div id="tela-lobby" class="tela">
     <h2 style="letter-spacing: 3px; font-weight: 900;">SALA CRIADA</h2>
-    <p style="color: var(--muted);">Compartilhe o código com seu oponente:</p>
+    <p style="color: var(--muted); text-align: center;">Compartilhe o código com seu oponente:</p>
     <div id="codigo-sala" class="codigo-sala" title="Clique para copiar">----</div>
     <div class="info-conexao" id="status-conexao">Aguardando oponente conectar...</div>
   </div>
@@ -141,7 +142,7 @@
   <div id="modal" class="modal">
     <div class="modal-conteudo">
       <h2 id="modal-titulo">RESULTADO</h2>
-      <div style="display: flex; gap: 12px; margin-top: 20px;">
+      <div style="display: flex; gap: 12px; margin-top: 20px; justify-content: center; flex-wrap: wrap;">
         <button class="btn" id="btn-revanche">🔁 Revanche</button>
         <button class="btn magenta" id="btn-sair">🚪 Sair</button>
       </div>
@@ -164,13 +165,21 @@
       appId: "1:82467678084:web:82f681d1d5b1ff606edfd1"
     };
 
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
+    let db;
+    try {
+      const app = initializeApp(firebaseConfig);
+      db = getDatabase(app);
+      console.log("✅ Firebase inicializado com sucesso!");
+    } catch (error) {
+      console.error("❌ Erro ao inicializar Firebase:", error);
+      document.getElementById('erro').textContent = "Erro de conexão com Firebase. Verifique o console (F12).";
+    }
 
     // === ESTADO DO JOGO ===
     let currentRoomId = null;
     let mySymbol = null;
     let gameData = null;
+    let modalMostrado = false;
 
     // === ELEMENTOS DOM ===
     const telaInicio = document.getElementById('tela-inicio');
@@ -190,15 +199,12 @@
     // === INICIALIZAÇÃO ===
     function criarCelulas() {
       tabuleiroEl.innerHTML = '';
-      for (let r = 0; r < 3; r++) {
-        for (let c = 0; c < 3; c++) {
-          const cel = document.createElement('div');
-          cel.className = 'celula';
-          cel.dataset.row = r;
-          cel.dataset.col = c;
-          cel.addEventListener('click', () => jogar(r, c));
-          tabuleiroEl.appendChild(cel);
-        }
+      for (let i = 0; i < 9; i++) { // Array 1D (0 a 8) é mais seguro no Firebase
+        const cel = document.createElement('div');
+        cel.className = 'celula';
+        cel.dataset.index = i;
+        cel.addEventListener('click', () => jogar(i));
+        tabuleiroEl.appendChild(cel);
       }
     }
     criarCelulas();
@@ -215,25 +221,27 @@
       tela.classList.add('ativa');
     }
 
-    // Copiar código ao clicar
     codigoEl.addEventListener('click', () => {
-      navigator.clipboard.writeText(codigoEl.textContent);
-      const original = statusConexao.textContent;
-      statusConexao.textContent = '✅ Código copiado!';
-      setTimeout(() => statusConexao.textContent = original, 2000);
+      navigator.clipboard.writeText(codigoEl.textContent).then(() => {
+        const original = statusConexao.textContent;
+        statusConexao.textContent = '✅ Código copiado para a área de transferência!';
+        setTimeout(() => statusConexao.textContent = original, 2500);
+      });
     });
 
-    // === LÓGICA DE SALA (FIREBASE) ===
+    // === LÓGICA DE SALA ===
     document.getElementById('btn-criar').addEventListener('click', async () => {
+      if (!db) return;
       const nick = document.getElementById('nick-criar').value.trim() || 'Host';
       const roomId = gerarCodigo();
       currentRoomId = roomId;
       mySymbol = 'X';
+      erroEl.textContent = '';
 
       const initialState = {
         host: nick,
         guest: null,
-        board: [[null, null, null], [null, null, null], [null, null, null]],
+        board: Array(9).fill(null), // Array 1D
         turn: 'X',
         status: 'waiting',
         winner: null,
@@ -249,29 +257,32 @@
         mostrarTela(telaLobby);
         ouvirSala(roomId);
       } catch (error) {
-        erroEl.textContent = 'Erro ao criar sala: ' + error.message;
+        console.error(error);
+        erroEl.textContent = 'Erro ao criar sala. Verifique as Regras do Firebase.';
       }
     });
 
     document.getElementById('btn-entrar').addEventListener('click', async () => {
+      if (!db) return;
       const nick = document.getElementById('nick-entrar').value.trim() || 'Guest';
       const roomId = document.getElementById('codigo-input').value.trim().toUpperCase();
+      erroEl.textContent = '';
       
       if (roomId.length !== 4) {
-        erroEl.textContent = 'Código deve ter 4 caracteres';
+        erroEl.textContent = 'O código deve ter exatamente 4 caracteres.';
         return;
       }
 
       try {
         const snapshot = await get(ref(db, 'rooms/' + roomId));
         if (!snapshot.exists()) {
-          erroEl.textContent = 'Sala não encontrada.';
+          erroEl.textContent = 'Sala não encontrada. Verifique o código.';
           return;
         }
         
         const data = snapshot.val();
-        if (data.guest !== null) {
-          erroEl.textContent = 'Sala já está cheia.';
+        if (data.status !== 'waiting') {
+          erroEl.textContent = 'Esta sala já está em jogo ou cheia.';
           return;
         }
 
@@ -283,11 +294,21 @@
           status: 'playing'
         });
 
-        onDisconnect(ref(db, 'rooms/' + roomId + '/guest')).set(null);
+        // Se o guest cair, libera a sala para o host jogar de novo
+        onDisconnect(ref(db, 'rooms/' + roomId)).update({
+          guest: null,
+          status: 'waiting',
+          board: Array(9).fill(null),
+          turn: 'X',
+          winner: null,
+          winningLine: null
+        });
+
         mostrarTela(telaJogo);
         ouvirSala(roomId);
       } catch (error) {
-        erroEl.textContent = 'Erro ao entrar: ' + error.message;
+        console.error(error);
+        erroEl.textContent = 'Erro ao entrar na sala. Verifique sua conexão.';
       }
     });
 
@@ -296,8 +317,8 @@
       onValue(ref(db, 'rooms/' + roomId), (snapshot) => {
         const data = snapshot.val();
         if (!data) {
-          if (currentRoomId) {
-            alert('A sala foi encerrada pelo host.');
+          if (currentRoomId && mySymbol === 'O') {
+            alert('O Host saiu da sala. A partida foi encerrada.');
             location.reload();
           }
           return;
@@ -311,6 +332,9 @@
           if (telaLobby.classList.contains('ativa')) mostrarTela(telaJogo);
           renderizarJogo(data);
         }
+      }, (error) => {
+        console.error("Erro de permissão no Firebase:", error);
+        erroEl.textContent = "Erro de permissão. Ative o 'Modo de Teste' no Realtime Database.";
       });
     }
 
@@ -320,32 +344,29 @@
       placarO.textContent = data.scores?.O || 0;
       placarE.textContent = data.scores?.empates || 0;
 
-      for (let r = 0; r < 3; r++) {
-        for (let c = 0; c < 3; c++) {
-          const idx = r * 3 + c;
-          const cel = tabuleiroEl.children[idx];
-          const valor = data.board[r][c];
-          const estaOcupada = cel.classList.contains('ocupada');
+      for (let i = 0; i < 9; i++) {
+        const cel = tabuleiroEl.children[i];
+        const valor = data.board[i];
+        const estaOcupada = cel.classList.contains('ocupada');
 
-          if (valor && !estaOcupada) {
-            cel.classList.add('ocupada');
-            cel.innerHTML = '';
-            cel.appendChild(criarSVGPeça(valor, true));
-            if (valor !== mySymbol) tocarClick();
-          } else if (!valor && estaOcupada) {
-            cel.classList.remove('ocupada');
-            cel.innerHTML = '';
-          }
+        if (valor && !estaOcupada) {
+          cel.classList.add('ocupada');
+          cel.innerHTML = '';
+          cel.appendChild(criarSVGPeça(valor, true));
+          if (valor !== mySymbol) tocarClick();
+        } else if (!valor && estaOcupada) {
+          cel.classList.remove('ocupada');
+          cel.innerHTML = '';
         }
       }
 
       document.querySelectorAll('.celula').forEach(c => c.classList.remove('vencedora'));
       if (data.status === 'finished' && data.winningLine) {
-        data.winningLine.forEach(([r, c]) => {
-          tabuleiroEl.children[r * 3 + c].classList.add('vencedora');
+        data.winningLine.forEach(idx => {
+          tabuleiroEl.children[idx].classList.add('vencedora');
         });
-        if (!modal.classList.contains('ativo') && !window.modalMostrado) {
-          window.modalMostrado = true;
+        if (!modalMostrado) {
+          modalMostrado = true;
           explodirParticulas();
           setTimeout(mostrarModalFim, 1000);
         }
@@ -357,7 +378,7 @@
           statusEl.style.color = mySymbol === 'X' ? 'var(--cyan)' : 'var(--magenta)';
           tabuleiroEl.querySelectorAll('.celula').forEach(c => c.classList.remove('bloqueada'));
         } else {
-          statusEl.textContent = '⏳ AGUARDANDO...';
+          statusEl.textContent = '⏳ AGUARDANDO O OPONENTE...';
           statusEl.style.color = 'var(--muted)';
           tabuleiroEl.querySelectorAll('.celula').forEach(c => c.classList.add('bloqueada'));
         }
@@ -365,13 +386,13 @@
     }
 
     // === AÇÃO DE JOGAR ===
-    function jogar(row, col) {
+    function jogar(index) {
       if (!gameData || gameData.status !== 'playing') return;
       if (gameData.turn !== mySymbol) return;
-      if (gameData.board[row][col] !== null) return;
+      if (gameData.board[index] !== null) return;
 
-      const novoBoard = gameData.board.map(r => [...r]);
-      novoBoard[row][col] = mySymbol;
+      const novoBoard = [...gameData.board];
+      novoBoard[index] = mySymbol;
       const proximoTurno = mySymbol === 'X' ? 'O' : 'X';
 
       const resultado = verificarVitoria(novoBoard);
@@ -388,22 +409,25 @@
         }
       }
 
-      update(ref(db, 'rooms/' + currentRoomId), atualizacao);
+      update(ref(db, 'rooms/' + currentRoomId), atualizacao).catch(err => {
+        console.error("Erro ao salvar jogada:", err);
+        alert("Erro de conexão ao salvar jogada.");
+      });
     }
 
     function verificarVitoria(board) {
       const linhas = [
-        [[0,0],[0,1],[0,2]], [[1,0],[1,1],[1,2]], [[2,0],[2,1],[2,2]],
-        [[0,0],[1,0],[2,0]], [[0,1],[1,1],[2,1]], [[0,2],[1,2],[2,2]],
-        [[0,0],[1,1],[2,2]], [[0,2],[1,1],[2,0]]
+        [0,1,2], [3,4,5], [6,7,8], // Linhas
+        [0,3,6], [1,4,7], [2,5,8], // Colunas
+        [0,4,8], [2,4,6]           // Diagonais
       ];
       for (const combo of linhas) {
         const [a, b, c] = combo;
-        if (board[a[0]][a[1]] && board[a[0]][a[1]] === board[b[0]][b[1]] && board[a[0]][a[1]] === board[c[0]][c[1]]) {
-          return { vencedor: board[a[0]][a[1]], linha: combo };
+        if (board[a] && board[a] === board[b] && board[a] === board[c]) {
+          return { vencedor: board[a], linha: combo };
         }
       }
-      if (board.every(r => r.every(c => c !== null))) return { vencedor: 'empate', linha: null };
+      if (board.every(c => c !== null)) return { vencedor: 'empate', linha: null };
       return null;
     }
 
@@ -424,11 +448,11 @@
     // === REVANCHE ===
     document.getElementById('btn-revanche').addEventListener('click', () => {
       modal.classList.remove('ativo');
-      window.modalMostrado = false;
+      modalMostrado = false;
       
       update(ref(db, 'rooms/' + currentRoomId), {
-        board: [[null,null,null],[null,null,null],[null,null,null]],
-        turn: gameData.turn === 'X' ? 'O' : 'X',
+        board: Array(9).fill(null),
+        turn: gameData.turn === 'X' ? 'O' : 'X', // Quem perdeu (ou empate) começa
         status: 'playing',
         winner: null,
         winningLine: null
@@ -441,11 +465,10 @@
         if (mySymbol === 'X') {
           remove(ref(db, 'rooms/' + currentRoomId)); // Host destrói a sala
         } else {
-          // Guest apenas sai, liberando a vaga
           update(ref(db, 'rooms/' + currentRoomId), {
             guest: null,
             status: 'waiting',
-            board: [[null,null,null],[null,null,null],[null,null,null]],
+            board: Array(9).fill(null),
             turn: 'X',
             winner: null,
             winningLine: null
