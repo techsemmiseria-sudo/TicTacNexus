@@ -2,879 +2,310 @@
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#080b18">
-<title>TIC TAC NEXUS — Jogo da Velha Online</title>
-
+<title>TIC TAC NEXUS</title>
 <style>
-:root {
-  --bg:#080b18; --panel:#11172ecc; --line:#a5beff29;
-  --text:#f4f7ff; --muted:#8993b2; --cyan:#36d9ff;
-  --aqua:#00ffe1; --purple:#9b5cff; --pink:#ff4f81;
-  --green:#62f3b0;
-}
-* { box-sizing:border-box }
-[hidden] { display:none!important }
-body {
-  min-height:100vh; margin:0; overflow-x:hidden; color:var(--text);
-  background:radial-gradient(ellipse at 65% 25%,#39207d40,transparent 36rem),var(--bg);
-  font:14px Arial,sans-serif;
-}
-button,input { font:inherit }
-button { cursor:pointer }
-button:focus-visible,input:focus-visible { outline:2px solid var(--cyan); outline-offset:3px }
-.top,main { width:min(1200px,calc(100% - 36px)); margin:auto }
-.top { height:76px; display:flex; align-items:center; justify-content:space-between }
-.logo { font-weight:bold; letter-spacing:.13em }
-.logo b { color:var(--cyan) }
-.status { color:var(--muted); font-size:10px; font-weight:bold; letter-spacing:.1em; text-transform:uppercase }
-.status i { display:inline-block; width:7px; height:7px; margin-right:7px; border-radius:50%; background:var(--pink) }
-.status.online { color:var(--green) }
-.status.online i { background:var(--green) }
-.status.connecting i { background:#ffd166 }
-.sound { margin-left:16px; width:36px; height:36px; border:1px solid var(--line); border-radius:50%; color:var(--muted); background:#ffffff08 }
-.home { min-height:calc(100vh - 76px); display:grid; grid-template-columns:1fr minmax(320px,440px); align-items:center; gap:clamp(35px,8vw,120px); padding:25px 4% 65px }
-.eyebrow { color:var(--cyan); font-size:10px; font-weight:bold; letter-spacing:.18em }
-.hero h1 { margin:20px 0; font-size:clamp(50px,7vw,86px); line-height:.95; letter-spacing:-.06em }
-.hero h1 em { color:var(--cyan); font-style:normal; text-shadow:0 0 28px #36d9ff66 }
-.hero p { max-width:460px; color:var(--muted); line-height:1.8 }
-.features { display:flex; flex-wrap:wrap; gap:16px; margin-top:28px; color:var(--muted); font-size:10px; font-weight:bold; text-transform:uppercase }
-.features b { color:var(--cyan) }
-.card { position:relative; border:1px solid var(--line); border-radius:17px; background:linear-gradient(145deg,#171d39dd,#0a0e1edb); box-shadow:0 24px 70px #0007; backdrop-filter:blur(14px) }
-.lobby { padding:28px; overflow:hidden }
-.lobby:before,.waiting-card:before { content:""; position:absolute; top:0; left:15%; right:15%; height:1px; background:linear-gradient(90deg,transparent,var(--cyan),transparent) }
-.meta,.panel-head { display:flex; align-items:center; justify-content:space-between }
-.live { color:var(--green); font-size:9px; font-weight:bold; letter-spacing:.1em }
-.lobby h2 { margin:30px 0 7px; font-size:27px }
-.sub { margin:0 0 24px; color:var(--muted); font-size:12px }
-.form { display:flex; flex-direction:column; gap:9px }
-.label { color:#c3cce5; font-size:10px; font-weight:bold }
-.input { height:48px; display:flex; align-items:center; border:1px solid var(--line); border-radius:9px; background:#05081799 }
-.input span { width:40px; text-align:center; color:#7784a5 }
-.input input { min-width:0; flex:1; height:100%; border:0; outline:0; color:var(--text); background:transparent }
-.input input::placeholder { color:#65708d }
-.code { text-transform:uppercase; letter-spacing:.25em }
-.primary,.secondary { min-height:46px; display:flex; align-items:center; justify-content:space-between; padding:0 15px; border-radius:9px; font-size:11px; font-weight:bold; transition:.2s }
-.primary { border:1px solid #36d9ff99; color:#03101b; background:linear-gradient(100deg,var(--cyan),var(--aqua)) }
-.secondary { border:1px solid #36d9ff55; color:var(--cyan); background:#36d9ff0e }
-.primary:hover,.secondary:hover { transform:translateY(-2px) }
-.divider { display:flex; align-items:center; gap:10px; margin:22px 0; color:var(--muted); font-size:9px; text-transform:uppercase; white-space:nowrap }
-.divider:before,.divider:after { content:""; height:1px; flex:1; background:var(--line) }
-.privacy { margin:22px 0 0; text-align:center; color:var(--muted); font-size:9px }
-.page-title { padding-top:40px; text-align:center }
-.page-title h1 { margin:12px 0 8px; font-size:clamp(30px,5vw,46px) }
-.page-title p { color:var(--muted); font-size:13px }
-.waiting-card { width:min(100%,470px); margin:28px auto 60px; padding:32px; text-align:center }
-.room-label { color:var(--muted); font-size:9px; font-weight:bold; letter-spacing:.15em }
-.room-code { margin:13px 0 0; border:0; color:var(--cyan); background:none; font-size:clamp(40px,9vw,58px); font-weight:bold; letter-spacing:.16em; text-shadow:0 0 24px #36d9ff66 }
-.hint { color:var(--muted); font-size:10px }
-.orbit { height:120px; display:grid; place-items:center; position:relative }
-.orbit:before { content:""; position:absolute; width:150px; height:62px; border:1px solid #36d9ff44; border-radius:50%; transform:rotate(-20deg); animation:spin 8s linear infinite }
-.core { width:70px; height:70px; display:grid; place-items:center; border:1px solid #36d9ff88; border-radius:50%; color:var(--cyan); background:#36d9ff12; font-size:25px; font-weight:bold; box-shadow:0 0 28px #36d9ff33; animation:float 3s ease-in-out infinite }
-.slots { display:grid; grid-template-columns:1fr 1fr; gap:9px }
-.slot { min-height:50px; display:flex; align-items:center; gap:9px; padding:8px; border:1px solid var(--line); border-radius:8px; text-align:left; font-size:10px }
-.slot.empty { border-style:dashed; color:var(--muted) }
-.symbol { width:28px; height:28px; display:grid; place-items:center; border-radius:7px; color:var(--cyan); background:#36d9ff18; font-weight:bold }
-.slot:nth-child(2) .symbol { color:var(--purple); background:#9b5cff1c }
-.waiting-msg { min-height:20px; margin:18px 0; color:var(--muted); font-size:11px }
-.actions { display:grid; gap:9px }
-.text-button { border:0; color:var(--muted); background:none; font-size:10px }
-.text-button:hover { color:var(--pink) }
-.game { padding:36px 0 65px }
-.game-head { display:flex; align-items:end; justify-content:space-between; gap:14px; margin-bottom:28px }
-.game-head h1 { margin:8px 0 0; font-size:clamp(27px,4vw,44px) }
-.game-actions { display:flex; align-items:center; gap:12px }
-.mini { padding:9px; border:1px solid var(--line); border-radius:7px; color:var(--muted); background:#ffffff08; font-size:9px }
-.mini strong { color:var(--cyan); letter-spacing:.15em }
-.game-grid { display:grid; grid-template-columns:200px minmax(280px,500px) 200px; justify-content:space-between; align-items:start; gap:22px; max-width:1000px; margin:auto }
-.side { min-height:230px; padding:18px 15px }
-.panel-head { color:var(--muted); font-size:9px; font-weight:bold; letter-spacing:.12em }
-.players { display:grid; gap:8px; margin-top:20px }
-.player { display:flex; align-items:center; gap:8px; padding:8px; border:1px solid transparent; border-radius:8px; background:#ffffff07 }
-.player.current { border-color:#36d9ff66 }
-.player-info { min-width:0; display:grid; gap:3px }
-.player-name { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:10px; font-weight:bold }
-.player-status { color:var(--muted); font-size:8px }
-.round,.draws { display:flex; justify-content:space-between; margin-top:22px; padding-top:14px; border-top:1px solid var(--line); color:var(--muted); font-size:9px }
-.round strong,.draws strong { color:var(--text); font-size:17px }
-.score { display:flex; align-items:center; gap:9px; margin-top:20px }
-.score-info { min-width:0; display:flex; flex:1; align-items:center; justify-content:space-between; gap:5px }
-.score-info small { overflow:hidden; color:var(--muted); font-size:9px; text-overflow:ellipsis; white-space:nowrap }
-.score-info strong { font-size:22px }
-.score .o { color:var(--purple); background:#9b5cff1b }
-.vs { margin-top:12px; text-align:center; color:var(--muted); font-size:8px }
-.board-wrap { text-align:center }
-.turn { display:inline-block; margin:0 0 13px; padding:7px 12px; border:1px solid #36d9ff55; border-radius:30px; color:var(--cyan); background:#36d9ff0d; font-size:10px; font-weight:bold; text-transform:uppercase }
-.turn.off { color:var(--muted); border-color:var(--line) }
-.board { width:min(100%,480px); aspect-ratio:1; display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin:auto; padding:8px; border:1px solid var(--line); border-radius:16px; background:#05081799 }
-.cell { display:grid; place-items:center; border:1px solid #859de733; border-radius:10px; color:var(--text); background:#121936ad }
-.cell:hover:not(:disabled) { border-color:var(--cyan); background:#36d9ff12 }
-.cell:disabled { cursor:not-allowed }
-.mark { font-size:clamp(42px,10vw,78px); font-weight:bold; animation:pop .25s ease }
-.x .mark { color:var(--cyan); text-shadow:0 0 22px #36d9ff77 }
-.o .mark { color:var(--purple); text-shadow:0 0 22px #9b5cff77 }
-.winner { border-color:var(--aqua); background:#00ffe11c; box-shadow:0 0 24px #00ffe155 }
-.draw { border-color:#9b5cff66 }
-.message { min-height:22px; color:var(--muted); font-size:11px }
-.again { width:min(100%,260px); justify-content:center; margin:10px auto }
-.countdown { position:fixed; z-index:10; inset:0; display:grid; place-content:center; gap:14px; text-align:center; background:#040612df; backdrop-filter:blur(8px) }
-.countdown span { color:var(--cyan); font-size:10px; font-weight:bold; letter-spacing:.2em }
-.countdown strong { font-size:clamp(90px,20vw,170px); text-shadow:0 0 40px #36d9ff88 }
-.toasts { position:fixed; z-index:20; right:18px; bottom:18px; width:min(340px,calc(100% - 36px)); display:grid; gap:8px }
-.toast { padding:13px; border:1px solid #36d9ff55; border-radius:9px; background:#11162cf5; box-shadow:0 15px 40px #0008; font-size:11px }
-.toast.error { border-color:#ff4f8177 }
-.toast.success { border-color:#62f3b077 }
-@keyframes float { 50% { transform:translateY(-7px) } }
-@keyframes spin { to { transform:rotate(340deg) } }
-@keyframes pop { from { opacity:0; transform:scale(.5) } to { opacity:1; transform:scale(1) } }
-@media(max-width:850px) {
-  .home { grid-template-columns:1fr minmax(300px,390px); gap:28px; padding-inline:0 }
-  .game-grid { grid-template-columns:1fr 1.5fr; max-width:650px }
-  .board-wrap { grid-column:1/-1; grid-row:1 }
-}
-@media(max-width:650px) {
-  .home { display:flex; flex-direction:column; align-items:stretch; padding:35px 0 }
-  .hero h1 { font-size:58px }
-  .lobby { padding:23px 18px }
-  .game-head { align-items:start }
-  .game-actions { flex-direction:column; align-items:end }
-  .game-grid { grid-template-columns:1fr 1fr; gap:10px }
-  .board-wrap { grid-column:1/-1 }
-  .side { min-height:0; padding:14px 11px }
-  .player-name { font-size:9px }
-  .score-info { display:block }
-  .score-info strong { display:block }
-}
-@media(prefers-reduced-motion:reduce) {
-  *,*:before,*:after { animation-duration:.01ms!important; animation-iteration-count:1!important; transition-duration:.01ms!important }
-}
+:root{--bg:#080b18;--panel:#11172e;--line:#ffffff22;--text:#f4f7ff;--muted:#8993b2;--cyan:#36d9ff;--purple:#9b5cff;--green:#62f3b0;--pink:#ff4f81}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;min-height:100vh;color:var(--text);background:radial-gradient(ellipse at 65% 20%,#39207d55,transparent 35rem),var(--bg);font:14px Arial,sans-serif}
+button,input{font:inherit}button{cursor:pointer}button:focus-visible,input:focus-visible{outline:2px solid var(--cyan);outline-offset:3px}
+.top,main{width:min(1100px,calc(100% - 32px));margin:auto}
+.top{height:70px;display:flex;align-items:center;justify-content:space-between}
+.logo{font-weight:bold;letter-spacing:.12em}.logo b{color:var(--cyan)}
+.status{color:var(--muted);font-size:10px}.status.online{color:var(--green)}
+.hero{min-height:calc(100vh - 70px);display:grid;grid-template-columns:1fr minmax(300px,420px);align-items:center;gap:50px;padding:30px 4% 65px}
+.eyebrow{color:var(--cyan);font-size:10px;font-weight:bold;letter-spacing:.16em}
+.hero h1{font-size:clamp(48px,7vw,82px);line-height:.95;letter-spacing:-.06em}
+.hero h1 em{color:var(--cyan);font-style:normal}
+.hero p{max-width:430px;color:var(--muted);line-height:1.7}
+.card{border:1px solid var(--line);border-radius:16px;background:#11172ecc;box-shadow:0 20px 60px #0007;backdrop-filter:blur(12px)}
+.lobby,.wait-card,.side{padding:24px}
+.lobby h2{margin-bottom:7px}.muted{color:var(--muted);font-size:12px}
+.form{display:grid;gap:9px;margin-top:19px}
+.label{font-size:10px;font-weight:bold;color:#cbd4ed}
+.input{height:46px;padding:0 12px;border:1px solid var(--line);border-radius:8px;color:var(--text);background:#050817}
+.input::placeholder{color:#69748f}
+.code-input{text-transform:uppercase;letter-spacing:.2em}
+.btn{min-height:44px;padding:0 14px;border:1px solid #36d9ff66;border-radius:8px;color:#07111a;background:linear-gradient(100deg,var(--cyan),#00ffe1);font-weight:bold}
+.btn.alt{color:var(--cyan);background:#36d9ff12}
+.divider{text-align:center;margin:19px 0;color:var(--muted);font-size:10px}
+.page{text-align:center;padding:35px 0}
+.page h1{font-size:clamp(28px,5vw,44px)}
+.wait-card{width:min(100%,460px);margin:24px auto}
+.room-code{border:0;color:var(--cyan);background:none;font-size:48px;font-weight:bold;letter-spacing:.14em}
+.slots{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:22px 0}
+.slot{padding:12px;border:1px solid var(--line);border-radius:8px}
+.game-head{display:flex;justify-content:space-between;align-items:center;margin:32px 0 24px}
+.game-grid{display:grid;grid-template-columns:180px minmax(280px,470px) 180px;justify-content:space-between;gap:18px}
+.side{min-height:150px}
+.side h3{font-size:10px;color:var(--muted);letter-spacing:.12em}
+.player{padding:8px;margin:7px 0;border-radius:7px;background:#ffffff09;font-size:11px}
+.board-wrap{text-align:center}
+.turn{display:inline-block;margin-bottom:12px;padding:8px 13px;border:1px solid #36d9ff66;border-radius:30px;color:var(--cyan);font-size:10px;font-weight:bold}
+.board{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:8px;border:1px solid var(--line);border-radius:14px;background:#050817}
+.cell{aspect-ratio:1;border:1px solid #ffffff20;border-radius:9px;color:var(--cyan);background:#121936;font-size:clamp(38px,10vw,75px);font-weight:bold}
+.cell.o{color:var(--purple)}.cell.win{border-color:#00ffe1;box-shadow:0 0 18px #00ffe166}
+.score{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--line);font-size:12px}
+.toastbox{position:fixed;right:16px;bottom:16px;display:grid;gap:8px}
+.toast{max-width:320px;padding:12px;border:1px solid #36d9ff66;border-radius:8px;background:#11172e}
+.toast.error{border-color:var(--pink)}.toast.success{border-color:var(--green)}
+.countdown{position:fixed;inset:0;display:grid;place-content:center;text-align:center;background:#050817e8;font-size:100px;color:var(--cyan)}
+@media(max-width:760px){.hero{display:flex;flex-direction:column;align-items:stretch;gap:20px;padding-top:28px}.hero h1{font-size:56px}.game-grid{grid-template-columns:1fr 1fr}.board-wrap{grid-column:1/-1;grid-row:1}.side{padding:14px}}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important}}
 </style>
 </head>
-
 <body>
 <header class="top">
   <div class="logo">◇ TIC TAC <b>NEXUS</b></div>
-  <div style="display:flex;align-items:center">
-    <div id="connection" class="status"><i></i><span>Conectando Firebase</span></div>
-    <button id="sound" class="sound" aria-label="Ativar sons" aria-pressed="false">♫</button>
-  </div>
+  <div id="connection" class="status">Conectando Firebase…</div>
 </header>
 
 <main>
-  <section id="home" class="home">
-    <div class="hero">
+  <section id="home" class="hero">
+    <div>
       <div class="eyebrow">MULTIPLAYER EM TEMPO REAL</div>
       <h1>Conecte-se.<br><em>Desafie.</em><br>Vença.</h1>
-      <p>Uma disputa clássica com energia do futuro. Crie uma sala privada, convide alguém e mostre quem domina o tabuleiro.</p>
-      <div class="features"><span><b>01</b> Salas privadas</span><span><b>02</b> Partidas ao vivo</span></div>
+      <p>Crie uma sala privada, compartilhe o código e dispute uma partida em tempo real.</p>
     </div>
 
     <div class="card lobby">
-      <div class="meta"><span class="live">● SISTEMA ONLINE</span><small>NXS / 001</small></div>
+      <div class="eyebrow">SISTEMA ONLINE</div>
       <h2>Entre na arena</h2>
-      <p class="sub">Escolha seu nome para começar a jogar.</p>
-
+      <p class="muted">Escolha seu nome para começar.</p>
       <form id="createForm" class="form">
         <label class="label" for="name">Seu nome</label>
-        <div class="input"><span>◈</span><input id="name" maxlength="16" placeholder="Ex.: Alex" autocomplete="nickname" required></div>
-        <button class="primary" type="submit">Criar sala privada <b>↗</b></button>
+        <input id="name" class="input" maxlength="16" placeholder="Ex.: Alex" required>
+        <button class="btn" type="submit">Criar sala privada →</button>
       </form>
-
       <div class="divider">ou entre com um código</div>
-
       <form id="joinForm" class="form">
         <label class="label" for="code">Código da sala</label>
-        <div class="input"><span>#</span><input id="code" class="code" maxlength="6" placeholder="ABC123" autocomplete="off" required></div>
-        <button class="secondary" type="submit">Entrar na sala <b>→</b></button>
+        <input id="code" class="input code-input" maxlength="6" placeholder="ABC123" required>
+        <button class="btn alt" type="submit">Entrar na sala →</button>
       </form>
-
-      <p class="privacy">Sem cadastro. Uma partida justa.</p>
     </div>
   </section>
 
-  <section id="waitingScreen" hidden>
-    <div class="page-title">
-      <div class="eyebrow" style="justify-content:center">SALA PRIVADA</div>
-      <h1>Prepare-se para o duelo</h1>
-      <p>Compartilhe o código abaixo com seu adversário.</p>
-    </div>
-
-    <div class="card waiting-card">
-      <div class="room-label">CÓDIGO DA SALA</div>
-      <button id="copyWaiting" class="room-code"><span id="roomCode">------</span> ⧉</button>
-      <p id="hint" class="hint">Toque no código para copiar</p>
-      <div class="orbit"><div class="core">X · O</div></div>
+  <section id="waitingScreen" class="page" hidden>
+    <div class="eyebrow">SALA PRIVADA</div>
+    <h1>Aguardando adversário</h1>
+    <p class="muted">Compartilhe este código para convidar alguém.</p>
+    <div class="card wait-card">
+      <div class="muted">CÓDIGO DA SALA</div>
+      <button id="copyCode" class="room-code"><span id="roomCode">------</span></button>
       <div id="slots" class="slots"></div>
-      <p id="waitingMsg" class="waiting-msg">Aguardando adversário...</p>
-      <div class="actions">
-        <button id="share" class="secondary">Compartilhar sala ↗</button>
-        <button id="leaveWaiting" class="text-button">Sair da sala</button>
-      </div>
+      <button id="leaveWaiting" class="btn alt">Sair da sala</button>
     </div>
   </section>
 
-  <section id="gameScreen" class="game" hidden>
+  <section id="gameScreen" hidden>
     <div class="game-head">
-      <div><div class="eyebrow">ARENA AO VIVO</div><h1>O próximo movimento é seu.</h1></div>
-      <div class="game-actions">
-        <button id="copyGame" class="mini">SALA <strong>------</strong> ⧉</button>
-        <button id="leaveGame" class="text-button">Sair</button>
-      </div>
+      <div><div class="eyebrow">ARENA AO VIVO</div><h2>Jogo da Velha</h2></div>
+      <button id="leaveGame" class="btn alt">Sair</button>
     </div>
-
     <div class="game-grid">
       <aside class="card side">
-        <div class="panel-head"><span>JOGADORES</span><span class="live">AO VIVO</span></div>
-        <div id="players" class="players"></div>
-        <div class="round"><span>RODADA</span><strong id="round">01</strong></div>
+        <h3>JOGADORES</h3>
+        <div id="players"></div>
+        <p class="muted">Rodada <strong id="round">1</strong></p>
       </aside>
-
       <div class="board-wrap">
-        <div id="turn" class="turn"><span id="turnText">É sua vez</span></div>
-        <div id="board" class="board" role="grid" aria-label="Tabuleiro do jogo da velha"></div>
-        <p id="message" class="message" aria-live="polite">Faça seu movimento.</p>
-        <button id="again" class="primary again" hidden>Jogar novamente ↻</button>
+        <div id="turn" class="turn">Aguardando partida</div>
+        <div id="board" class="board" role="grid" aria-label="Tabuleiro"></div>
+        <p id="message" class="muted" aria-live="polite"></p>
+        <button id="again" class="btn" hidden>Jogar novamente</button>
       </div>
-
       <aside class="card side">
-        <div class="panel-head"><span>PLACAR</span><span>✦</span></div>
-        <div class="score"><span class="symbol">X</span><div class="score-info"><small id="xName">Jogador X</small><strong id="xScore">0</strong></div></div>
-        <div class="vs">VS</div>
-        <div class="score"><span class="symbol o">O</span><div class="score-info"><small id="oName">Jogador O</small><strong id="oScore">0</strong></div></div>
-        <div class="draws"><span>Empates</span><strong id="draws">0</strong></div>
+        <h3>PLACAR</h3>
+        <div class="score"><span id="xName">Jogador X</span><strong id="xScore">0</strong></div>
+        <div class="score"><span id="oName">Jogador O</span><strong id="oScore">0</strong></div>
+        <div class="score"><span>Empates</span><strong id="draws">0</strong></div>
       </aside>
     </div>
   </section>
 </main>
 
-<div id="countdown" class="countdown" hidden><span>A PARTIDA COMEÇA EM</span><strong id="count">3</strong></div>
-<div id="toasts" class="toasts" aria-live="polite"></div>
+<div id="countdown" class="countdown" hidden>3</div>
+<div id="toasts" class="toastbox" aria-live="polite"></div>
 
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
-import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
-import {
-  getFirestore, doc, getDoc, runTransaction, onSnapshot, serverTimestamp
-} from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
+import {initializeApp} from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
+import {getAuth,signInAnonymously} from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
+import {getFirestore,doc,getDoc,runTransaction,onSnapshot} from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
 
-const firebaseConfig = {
-  apiKey: "AIzaSyCR1TOm8fzZD92dnpsUJt7rwCkifPj1cQo",
-  authDomain: "tic-tac-nexus-31732.firebaseapp.com",
-  projectId: "tic-tac-nexus-31732",
-  storageBucket: "tic-tac-nexus-31732.firebasestorage.app",
-  messagingSenderId: "511490864392",
-  appId: "1:511490864392:web:9c867ca152e536675a28bd"
-};
+const app=initializeApp({
+  apiKey:"AIzaSyDW7dMktBwC39tDt_0RBqOZ5GUNQm3OzQU",
+  authDomain:"tictacnexus-d4a8f.firebaseapp.com",
+  projectId:"tictacnexus-d4a8f",
+  storageBucket:"tictacnexus-d4a8f.firebasestorage.app",
+  messagingSenderId:"885149260979",
+  appId:"1:885149260979:web:22268a90938de1f52264c6"
+});
+const auth=getAuth(app),db=getFirestore(app),$=s=>document.querySelector(s);
+const g={uid:"",name:sessionStorage.getItem("nexusName")||"",room:sessionStorage.getItem("nexusRoom")||"",symbol:"",players:[],board:Array(9).fill(""),turn:"X",status:"waiting",round:1,score:{X:0,O:0,draws:0},ready:[],winning:[],unsub:null,lastResult:""};
+const u={connection:\(("#connection"),name:\)("#name"),code:\(("#code"),room:\)("#roomCode"),slots:\(("#slots"),players:\)("#players"),board:\(("#board"),turn:\)("#turn"),message:\(("#message"),again:\)("#again"),round:\(("#round"),xName:\)("#xName"),oName:\(("#oName"),xScore:\)("#xScore"),oScore:\(("#oScore"),draws:\)("#draws"),countdown:\(("#countdown"),toasts:\)("#toasts")};
 
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
-const $ = selector => document.querySelector(selector);
+function view(v){\(("#home").hidden=v!=="home";\)("#waitingScreen").hidden=v!=="wait";$("#gameScreen").hidden=v!=="game"}
+function note(text,type=""){const e=document.createElement("div");e.className="toast "+type;e.textContent=text;u.toasts.append(e);setTimeout(()=>e.remove(),4000)}
+function ref(code=g.room){return doc(db,"rooms",code)}
+function err(e){const m={NO_ROOM:"Sala não encontrada.",FULL:"Sala cheia.",STARTED:"A partida já começou.",TURN:"Jogada inválida ou não é sua vez."};if(m[e.message])return m[e.message];if(e.code==="permission-denied")return"Permissão negada. Confira as regras do Firestore.";if(e.code==="auth/operation-not-allowed")return"Ative o login anônimo no Firebase Authentication.";if(e.code==="auth/unauthorized-domain")return"Adicione techsemmiseria-sudo.github.io aos domínios autorizados do Firebase.";return"Falha ao conectar ao Firebase."}
+async function login(){if(!auth.currentUser)await signInAnonymously(auth);g.uid=auth.currentUser.uid}
+function makeCode(){const a=crypto.getRandomValues(new Uint8Array(6)),c="ABCDEFGHJKLMNPQRSTUVWXYZ23456789";return[...a].map(x=>c[x%c.length]).join("")}
+function stop(){if(g.unsub){g.unsub();g.unsub=null}}
 
-const state = {
-  uid:null, name:sessionStorage.getItem("nexusName")||"",
-  room:sessionStorage.getItem("nexusRoom")||"", symbol:"",
-  players:[], board:Array(9).fill(""), turn:"X", status:"waiting",
-  score:{X:0,O:0,draws:0}, round:1, starter:"X", nextStarter:"X",
-  ready:[], winningCells:[], unsubscribe:null, lastStartedRound:null,
-  lastResult:"", sound:false
-};
-
-const ui = {
-  connection:\(("#connection"), name:\)("#name"), code:$("#code"),
-  roomCode:\(("#roomCode"), hint:\)("#hint"), slots:$("#slots"),
-  waitingMsg:\(("#waitingMsg"), players:\)("#players"), board:$("#board"),
-  turn:\(("#turn"), turnText:\)("#turnText"), message:$("#message"),
-  again:\(("#again"), round:\)("#round"), xName:\(("#xName"), oName:\)("#oName"),
-  xScore:\(("#xScore"), oScore:\)("#oScore"), draws:$("#draws"),
-  countdown:\(("#countdown"), count:\)("#count"), toasts:$("#toasts")
-};
-
-function setScreen(screen) {
-  $("#home").hidden = screen !== "home";
-  $("#waitingScreen").hidden = screen !== "waiting";
-  $("#gameScreen").hidden = screen !== "game";
+function watch(code){
+  stop();g.room=code;sessionStorage.setItem("nexusRoom",code);
+  g.unsub=onSnapshot(ref(code),snap=>{
+    if(!snap.exists()){stop();g.room="";sessionStorage.removeItem("nexusRoom");view("home");note("A sala não existe mais.","error");return}
+    const d=snap.data(),me=Object.entries(d.players||{}).find(([,p])=>p&&p.uid===g.uid);
+    if(!me){view("home");note("Você não faz parte desta sala.","error");return}
+    const prev=g.status,oldRound=g.round;
+    g.symbol=me[0];g.name=me[1].name;g.players=Object.entries(d.players||{}).filter(([,p])=>p).map(([symbol,p])=>({...p,symbol}));
+    g.board=d.board||Array(9).fill("");g.turn=d.currentPlayer||"X";g.status=d.status||"waiting";g.round=d.round||1;
+    g.score=d.score||{X:0,O:0,draws:0};g.ready=d.ready||[];g.winning=d.winningCells||[];
+    render();
+    if(g.status==="waiting"){view("wait");renderWait()}else view("game");
+    if(g.status==="playing"&&(prev!=="playing"||oldRound!==g.round))countdown();
+    if(g.status==="finished"){
+      const key=g.round+":"+(d.winner||"draw");
+      if(g.lastResult!==key){g.lastResult=key;g.message.textContent=d.winner?(d.winner===g.symbol?"Você venceu!":"O adversário venceu."):"Empate!";note(g.message.textContent)}
+    }else g.lastResult="";
+    u.connection.textContent="Firebase conectado";u.connection.className="status online";
+  },e=>{console.error(e);note(err(e),"error")});
 }
 
-function setStatus(text, online=false, connecting=false) {
-  ui.connection.className = "status" + (online ? " online" : "") + (connecting ? " connecting" : "");
-  ui.connection.querySelector("span").textContent = text;
-}
-
-function toast(text, type="info") {
-  const item = document.createElement("div");
-  item.className = "toast " + type;
-  item.textContent = text;
-  ui.toasts.append(item);
-  setTimeout(() => item.remove(), 4000);
-}
-
-function roomRef(code=state.room) {
-  return doc(db, "rooms", code);
-}
-
-function explainError(error) {
-  const messages = {
-    ROOM_NOT_FOUND:"Sala não encontrada. Confira o código.",
-    ROOM_FULL:"Essa sala já está cheia.",
-    ROOM_STARTED:"Essa partida já começou.",
-    NOT_YOUR_TURN:"Ainda não é sua vez.",
-    INVALID_MOVE:"Essa casa não está disponível.",
-    NOT_A_PLAYER:"Você não faz parte dessa sala."
-  };
-  if (messages[error.message]) return messages[error.message];
-  if (error.code === "auth/operation-not-allowed") return "Ative o login anônimo em Firebase Authentication.";
-  if (error.code === "permission-denied") return "Acesso negado. Confira as regras do Firestore.";
-  return "Erro ao conectar ao Firebase. Confira a configuração e a internet.";
-}
-
-async function signIn() {
-  if (!auth.currentUser) {
-    const result = await signInAnonymously(auth);
-    state.uid = result.user.uid;
-  } else {
-    state.uid = auth.currentUser.uid;
-  }
-}
-
-function makeCode() {
-  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-  const bytes = crypto.getRandomValues(new Uint8Array(6));
-  return [...bytes].map(byte => chars[byte % chars.length]).join("");
-}
-
-function stopListening() {
-  if (state.unsubscribe) {
-    state.unsubscribe();
-    state.unsubscribe = null;
-  }
-}
-
-function subscribeRoom(code) {
-  stopListening();
-  state.room = code;
-  sessionStorage.setItem("nexusRoom", code);
-
-  state.unsubscribe = onSnapshot(roomRef(code), snapshot => {
-    if (!snapshot.exists()) {
-      stopListening();
-      state.room = "";
-      sessionStorage.removeItem("nexusRoom");
-      setScreen("home");
-      toast("A sala não existe mais.", "error");
-      return;
+async function create(e){
+  e.preventDefault();g.name=u.name.value.trim();
+  if(g.name.length<2||g.name.length>16)return note("Use um nome de 2 a 16 caracteres.","error");
+  try{
+    await login();let code,ok=false;
+    for(let i=0;i<8&&!ok;i++){
+      code=makeCode();
+      try{
+        await runTransaction(db,async tx=>{
+          const r=ref(code),s=await tx.get(r);if(s.exists())throw Error("COLLISION");
+          tx.set(r,{players:{X:{uid:g.uid,name:g.name},O:null},board:Array(9).fill(""),currentPlayer:"X",status:"waiting",round:1,starter:"X",nextStarter:"X",score:{X:0,O:0,draws:0},ready:[],winner:null,winningCells:[]});
+        });ok=true;
+      }catch(x){if(x.message!=="COLLISION")throw x}
     }
-
-    const previousStatus = state.status;
-    const previousRound = state.round;
-    const data = snapshot.data();
-    const me = Object.entries(data.players || {})
-      .find(([, player]) => player && player.uid === state.uid);
-
-    if (!me) {
-      stopListening();
-      state.room = "";
-      sessionStorage.removeItem("nexusRoom");
-      setScreen("home");
-      toast("Você não faz mais parte dessa sala.", "error");
-      return;
-    }
-
-    state.symbol = me[0];
-    state.name = me[1].name;
-    state.players = Object.entries(data.players || {})
-      .filter(([, player]) => player)
-      .map(([symbol, player]) => ({...player, symbol}));
-    state.board = data.board || Array(9).fill("");
-    state.turn = data.currentPlayer || "X";
-    state.status = data.status || "waiting";
-    state.score = data.score || {X:0,O:0,draws:0};
-    state.round = data.round || 1;
-    state.starter = data.starter || "X";
-    state.nextStarter = data.nextStarter || "X";
-    state.ready = data.ready || [];
-    state.winningCells = data.winningCells || [];
-
-    sessionStorage.setItem("nexusName", state.name);
-    setStatus("Firebase conectado", true);
-    renderAll();
-
-    if (state.status === "waiting") {
-      setScreen("waiting");
-      renderWaiting();
-    } else {
-      setScreen("game");
-    }
-
-    if (state.status === "playing" &&
-        (previousStatus !== "playing" || previousRound !== state.round) &&
-        state.lastStartedRound !== state.round) {
-      state.lastStartedRound = state.round;
-      startCountdown();
-    }
-
-    if (state.status === "finished") {
-      const key = `\({state.round}:\){data.winner || "draw"}`;
-      if (state.lastResult !== key) {
-        state.lastResult = key;
-        showResult(data.winner ? (data.winner === state.symbol ? "win" : "loss") : "draw");
-      }
-    } else {
-      state.lastResult = "";
-    }
-  }, error => {
-    console.error(error);
-    setStatus("Erro Firebase");
-    toast("Erro ao sincronizar a sala. Confira as regras do Firestore.", "error");
-  });
+    if(!ok)throw Error("ROOM");
+    sessionStorage.setItem("nexusName",g.name);watch(code);view("wait");
+  }catch(x){console.error(x);note(err(x),"error")}
 }
 
-function validName() {
-  const name = ui.name.value.trim();
-  if (name.length < 2 || name.length > 16) {
-    toast("O nome deve ter de 2 a 16 caracteres.", "error");
-    return null;
-  }
-  return name;
-}
-
-async function createRoom() {
-  const name = validName();
-  if (!name) return;
-
-  try {
-    setStatus("Autenticando", false, true);
-    await signIn();
-    state.name = name;
-
-    for (let attempt=0; attempt<8; attempt++) {
-      const code = makeCode();
-      const ref = roomRef(code);
-
-      try {
-        await runTransaction(db, async transaction => {
-          const existing = await transaction.get(ref);
-          if (existing.exists()) throw new Error("CODE_TAKEN");
-
-          transaction.set(ref, {
-            createdAt:serverTimestamp(),
-            players:{X:{uid:state.uid,name},O:null},
-            board:Array(9).fill(""),
-            currentPlayer:"X",
-            status:"waiting",
-            round:1,
-            starter:"X",
-            nextStarter:"X",
-            score:{X:0,O:0,draws:0},
-            ready:[],
-            winner:null,
-            winningCells:[]
-          });
-        });
-
-        state.lastStartedRound = null;
-        subscribeRoom(code);
-        setScreen("waiting");
-        toast("Sala criada. Compartilhe o código!", "success");
-        return;
-      } catch (error) {
-        if (error.message !== "CODE_TAKEN") throw error;
-      }
-    }
-    throw new Error("Não foi possível criar a sala.");
-  } catch (error) {
-    console.error(error);
-    toast(explainError(error), "error");
-    setStatus("Erro Firebase");
-  }
-}
-
-async function joinRoom() {
-  const name = validName();
-  const code = ui.code.value.trim().toUpperCase();
-  ui.code.value = code;
-
-  if (!name) return;
-  if (!/^[A-Z0-9]{6}$/.test(code)) {
-    toast("Digite um código válido de 6 caracteres.", "error");
-    return;
-  }
-
-  try {
-    setStatus("Entrando na sala", false, true);
-    await signIn();
-
-    await runTransaction(db, async transaction => {
-      const ref = roomRef(code);
-      const snapshot = await transaction.get(ref);
-      if (!snapshot.exists()) throw new Error("ROOM_NOT_FOUND");
-
-      const data = snapshot.data();
-      const players = {...data.players};
-      const existing = Object.entries(players)
-        .find(([, player]) => player && player.uid === state.uid);
-
-      if (existing) return;
-      if (data.status !== "waiting") throw new Error("ROOM_STARTED");
-
-      const symbol = players.X ? "O" : "X";
-      if (players[symbol]) throw new Error("ROOM_FULL");
-      players[symbol] = {uid:state.uid,name};
-
-      transaction.update(ref, {
-        players,
-        status:players.X && players.O ? "playing" : "waiting",
-        board:Array(9).fill(""),
-        currentPlayer:data.starter || "X",
-        winner:null,
-        winningCells:[],
-        ready:[]
-      });
+async function join(e){
+  e.preventDefault();g.name=u.name.value.trim();const code=u.code.value.trim().toUpperCase();
+  if(g.name.length<2||g.name.length>16)return note("Use um nome de 2 a 16 caracteres.","error");
+  if(!/^[A-Z0-9]{6}$/.test(code))return note("Digite um código de 6 caracteres.","error");
+  try{
+    await login();
+    await runTransaction(db,async tx=>{
+      const r=ref(code),s=await tx.get(r);if(!s.exists())throw Error("NO_ROOM");
+      const d=s.data(),p={...d.players};
+      if(Object.values(p).some(x=>x&&x.uid===g.uid))return;
+      if(d.status!=="waiting")throw Error("STARTED");
+      const seat=p.X?"O":"X";if(p[seat])throw Error("FULL");
+      p[seat]={uid:g.uid,name:g.name};
+      tx.update(r,{players:p,status:p.X&&p.O?"playing":"waiting",board:Array(9).fill(""),currentPlayer:d.starter||"X",ready:[],winner:null,winningCells:[]});
     });
-
-    state.name = name;
-    state.lastStartedRound = null;
-    sessionStorage.setItem("nexusName", name);
-    subscribeRoom(code);
-    toast("Entrando na sala...", "success");
-  } catch (error) {
-    console.error(error);
-    toast(explainError(error), "error");
-    setStatus("Firebase conectado", true);
-  }
+    sessionStorage.setItem("nexusName",g.name);watch(code);
+  }catch(x){console.error(x);note(err(x),"error")}
 }
 
-function renderWaiting() {
-  ui.roomCode.textContent = state.room || "------";
-  ui.slots.innerHTML = "";
-
-  ["X","O"].forEach(symbol => {
-    const player = state.players.find(item => item.symbol === symbol);
-    const slot = document.createElement("div");
-    slot.className = "slot " + (player ? "" : "empty");
-    slot.innerHTML = '<span class="symbol">'+symbol+'</span><span class="slot-name"></span>';
-    slot.querySelector(".slot-name").textContent = player ? player.name : "Aguardando jogador";
-    ui.slots.append(slot);
-  });
-
-  ui.waitingMsg.textContent =
-    state.players.length === 2 ? "Preparando a arena..." : "Aguardando adversário...";
+function getWinner(b){
+  for(const line of [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]]){
+    const[a,c,d]=line;if(b[a]&&b[a]===b[c]&&b[a]===b[d])return{symbol:b[a],line}
+  }return null
 }
 
-function renderPlayers() {
-  ui.players.innerHTML = "";
-
-  [...state.players].sort((a,b) => a.symbol.localeCompare(b.symbol)).forEach(player => {
-    const item = document.createElement("div");
-    item.className = "player " + (player.symbol === state.turn ? "current" : "");
-    item.innerHTML =
-      '<span class="symbol">'+player.symbol+'</span>' +
-      '<span class="player-info"><span class="player-name"></span>' +
-      '<span class="player-status"></span></span>';
-    item.querySelector(".player-name").textContent =
-      player.name + (player.symbol === state.symbol ? " (você)" : "");
-    item.querySelector(".player-status").textContent =
-      player.symbol === state.turn ? "Jogando agora" : "Conectado";
-    ui.players.append(item);
-  });
-}
-
-function renderBoard() {
-  ui.board.innerHTML = "";
-
-  state.board.forEach((value,index) => {
-    const button = document.createElement("button");
-    button.className = "cell " + (value === "X" ? "x" : value === "O" ? "o" : "");
-    button.type = "button";
-    button.setAttribute("role","gridcell");
-    button.setAttribute("aria-label","Casa " + (index+1) + (value ? ", ocupada por "+value : ""));
-    button.disabled = !!value || state.status !== "playing" || state.turn !== state.symbol;
-
-    if (value) {
-      const mark = document.createElement("span");
-      mark.className = "mark";
-      mark.textContent = value;
-      button.append(mark);
-    }
-
-    if (state.winningCells.includes(index)) button.classList.add("winner");
-    if (state.status === "finished" && !state.winningCells.length && value) button.classList.add("draw");
-    button.onclick = () => makeMove(index);
-    ui.board.append(button);
-  });
-}
-
-function renderAll() {
-  renderPlayers();
-  renderBoard();
-
-  ui.round.textContent = String(state.round).padStart(2,"0");
-  ui.xScore.textContent = state.score.X || 0;
-  ui.oScore.textContent = state.score.O || 0;
-  ui.draws.textContent = state.score.draws || 0;
-
-  ui.xName.textContent = state.players.find(p=>p.symbol==="X")?.name || "Jogador X";
-  ui.oName.textContent = state.players.find(p=>p.symbol==="O")?.name || "Jogador O";
-  $("#copyGame strong").textContent = state.room || "------";
-
-  const mine = state.status === "playing" && state.turn === state.symbol;
-  ui.turn.classList.toggle("off",!mine);
-  ui.turnText.textContent = mine ? "É sua vez" :
-    state.status === "playing" ? "Vez do jogador "+state.turn : "Rodada encerrada";
-
-  if (state.status === "playing") {
-    ui.message.textContent = mine ? "Faça seu movimento." : "Vez do adversário.";
-  }
-
-  ui.again.hidden = state.status !== "finished";
-  ui.again.disabled = state.ready.includes(state.uid);
-  ui.again.textContent = ui.again.disabled ? "Aguardando adversário..." : "Jogar novamente ↻";
-}
-
-function winnerOn(board) {
-  const lines = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
-  for (const cells of lines) {
-    const [a,b,c] = cells;
-    if (board[a] && board[a] === board[b] && board[a] === board[c]) {
-      return {symbol:board[a],cells};
-    }
-  }
-  return null;
-}
-
-async function makeMove(index) {
-  try {
-    const ref = roomRef();
-
-    await runTransaction(db, async transaction => {
-      const snapshot = await transaction.get(ref);
-      if (!snapshot.exists()) throw new Error("ROOM_NOT_FOUND");
-
-      const data = snapshot.data();
-      const player = Object.entries(data.players || {})
-        .find(([,item]) => item && item.uid === state.uid);
-
-      if (!player) throw new Error("NOT_A_PLAYER");
-      if (data.status !== "playing") throw new Error("INVALID_MOVE");
-      if (data.currentPlayer !== player[0]) throw new Error("NOT_YOUR_TURN");
-      if (!Number.isInteger(index) || index < 0 || index > 8 || data.board[index]) {
-        throw new Error("INVALID_MOVE");
-      }
-
-      const board = [...data.board];
-      board[index] = player[0];
-      const result = winnerOn(board);
-
-      if (result) {
-        transaction.update(ref,{
-          board,status:"finished",winner:result.symbol,winningCells:result.cells,
-          score:{...data.score,[result.symbol]:(data.score[result.symbol]||0)+1},
-          nextStarter:result.symbol==="X"?"O":"X",ready:[]
-        });
-      } else if (board.every(Boolean)) {
-        transaction.update(ref,{
-          board,status:"finished",winner:null,winningCells:[],
-          score:{...data.score,draws:(data.score.draws||0)+1},
-          nextStarter:data.starter==="X"?"O":"X",ready:[]
-        });
-      } else {
-        transaction.update(ref,{
-          board,currentPlayer:player[0]==="X"?"O":"X"
-        });
-      }
+async function move(i){
+  try{
+    await runTransaction(db,async tx=>{
+      const r=ref(),s=await tx.get(r);if(!s.exists())throw Error("NO_ROOM");
+      const d=s.data(),p=Object.entries(d.players).find(([,x])=>x&&x.uid===g.uid);
+      if(!p||d.status!=="playing"||d.currentPlayer!==p[0]||d.board[i])throw Error("TURN");
+      const b=[...d.board];b[i]=p[0];const w=getWinner(b);
+      if(w)tx.update(r,{board:b,status:"finished",winner:w.symbol,winningCells:w.line,score:{...d.score,[w.symbol]:(d.score[w.symbol]||0)+1},nextStarter:w.symbol==="X"?"O":"X",ready:[]});
+      else if(b.every(Boolean))tx.update(r,{board:b,status:"finished",winner:null,winningCells:[],score:{...d.score,draws:(d.score.draws||0)+1},nextStarter:d.starter==="X"?"O":"X",ready:[]});
+      else tx.update(r,{board:b,currentPlayer:p[0]==="X"?"O":"X"});
     });
-  } catch (error) {
-    toast(explainError(error),"error");
-  }
+  }catch(x){note(err(x),"error")}
 }
 
-async function playAgain() {
-  try {
-    await runTransaction(db, async transaction => {
-      const ref = roomRef();
-      const snapshot = await transaction.get(ref);
-      if (!snapshot.exists()) throw new Error("ROOM_NOT_FOUND");
-
-      const data = snapshot.data();
-      if (data.status !== "finished") return;
-
-      const players = Object.values(data.players || {}).filter(Boolean);
-      if (players.length !== 2) throw new Error("ROOM_FULL");
-
-      const ready = [...new Set([...(data.ready||[]),state.uid])];
-      if (!players.every(player=>ready.includes(player.uid))) {
-        transaction.update(ref,{ready});
-        return;
-      }
-
-      const starter = data.nextStarter || "X";
-      transaction.update(ref,{
-        board:Array(9).fill(""),
-        status:"playing",
-        round:(data.round||1)+1,
-        starter,
-        currentPlayer:starter,
-        nextStarter:starter==="X"?"O":"X",
-        winner:null,
-        winningCells:[],
-        ready:[]
-      });
+async function again(){
+  try{
+    await runTransaction(db,async tx=>{
+      const r=ref(),s=await tx.get(r);if(!s.exists())throw Error("NO_ROOM");
+      const d=s.data(),players=Object.values(d.players).filter(Boolean);
+      if(d.status!=="finished"||players.length!==2)return;
+      const ready=[...new Set([...(d.ready||[]),g.uid])];
+      if(!players.every(p=>ready.includes(p.uid))){tx.update(r,{ready});return}
+      const starter=d.nextStarter||"X";
+      tx.update(r,{board:Array(9).fill(""),status:"playing",round:d.round+1,starter,currentPlayer:starter,nextStarter:starter==="X"?"O":"X",winner:null,winningCells:[],ready:[]});
     });
-  } catch (error) {
-    toast(explainError(error),"error");
-  }
+  }catch(x){note(err(x),"error")}
 }
 
-function showResult(result) {
-  ui.message.textContent =
-    result === "win" ? "Você venceu a rodada!" :
-    result === "loss" ? "Boa partida — o adversário venceu." : "Empate!";
-  toast(ui.message.textContent,result==="win"?"success":"info");
+function renderWait(){
+  u.room.textContent=g.room;u.slots.innerHTML="";
+  for(const symbol of ["X","O"]){const p=g.players.find(x=>x.symbol===symbol),el=document.createElement("div");el.className="slot";el.textContent=symbol+" — "+(p?p.name:"aguardando");u.slots.append(el)}
+}
+function render(){
+  u.players.innerHTML="";
+  for(const p of g.players){const el=document.createElement("div");el.className="player";el.textContent=p.symbol+" — "+p.name+(p.uid===g.uid?" (você)":"");u.players.append(el)}
+  u.board.innerHTML="";
+  g.board.forEach((v,i)=>{const b=document.createElement("button");b.className="cell "+(v==="O"?"o":"")+(g.winning.includes(i)?" win":"");b.textContent=v;b.disabled=!!v||g.status!=="playing"||g.turn!==g.symbol;b.onclick=()=>move(i);u.board.append(b)});
+  u.turn.textContent=g.status==="playing"?(g.turn===g.symbol?"É sua vez":"Vez do adversário"):"Partida encerrada";
+  u.round.textContent=g.round;u.xScore.textContent=g.score.X||0;u.oScore.textContent=g.score.O||0;u.draws.textContent=g.score.draws||0;
+  u.xName.textContent=g.players.find(p=>p.symbol==="X")?.name||"Jogador X";
+  u.oName.textContent=g.players.find(p=>p.symbol==="O")?.name||"Jogador O";
+  u.again.hidden=g.status!=="finished";u.again.disabled=g.ready.includes(g.uid);
+}
+function countdown(){
+  let n=3;u.countdown.hidden=false;u.countdown.textContent=n;
+  const t=setInterval(()=>{if(--n<1){clearInterval(t);u.countdown.hidden=true}else u.countdown.textContent=n},900);
+}
+async function leave(){
+  try{
+    await runTransaction(db,async tx=>{
+      const r=ref(),s=await tx.get(r);if(!s.exists())return;
+      const d=s.data(),p={...d.players},seat=Object.keys(p).find(k=>p[k]?.uid===g.uid);
+      if(!seat)return;p[seat]=null;
+      if(!Object.values(p).some(Boolean))tx.delete(r);
+      else tx.update(r,{players:p,board:Array(9).fill(""),status:"waiting",winner:null,winningCells:[],ready:[]});
+    });
+  }catch(x){console.error(x)}
+  stop();g.room="";sessionStorage.removeItem("nexusRoom");view("home");
 }
 
-function startCountdown() {
-  let n = 3;
-  ui.countdown.hidden = false;
-  ui.count.textContent = n;
+$("#createForm").addEventListener("submit",create);
+$("#joinForm").addEventListener("submit",join);
+u.code.addEventListener("input",()=>u.code.value=u.code.value.replace(/[^a-z0-9]/gi,"").toUpperCase());
+$("#again").addEventListener("click",again);
+$("#leaveWaiting").addEventListener("click",leave);
+$("#leaveGame").addEventListener("click",leave);
+$("#copyCode").addEventListener("click",async()=>{
+  try{await navigator.clipboard.writeText(g.room);note("Código copiado.")}
+  catch{note("Código da sala: "+g.room)}
+});
 
-  const timer = setInterval(() => {
-    n--;
-    if (n < 1) {
-      clearInterval(timer);
-      ui.countdown.hidden = true;
-    } else {
-      ui.count.textContent = n;
+async function start(){
+  try{
+    await login();u.connection.textContent="Firebase conectado";u.connection.className="status online";
+    if(g.room){
+      const s=await getDoc(ref());
+      if(s.exists()&&Object.values(s.data().players||{}).some(p=>p?.uid===g.uid)){watch(g.room);return}
+      g.room="";sessionStorage.removeItem("nexusRoom");
     }
-  },900);
-}
-
-async function copyRoom() {
-  if (!state.room) return;
-
-  try {
-    await navigator.clipboard.writeText(state.room);
-  } catch {
-    const temp = document.createElement("textarea");
-    temp.value = state.room;
-    document.body.append(temp);
-    temp.select();
-    document.execCommand("copy");
-    temp.remove();
-  }
-
-  ui.hint.textContent = "Código copiado";
-  toast("Código copiado.","success");
-}
-
-async function leaveRoom() {
-  if (state.room && state.uid) {
-    try {
-      await runTransaction(db,async transaction=>{
-        const ref=roomRef();
-        const snapshot=await transaction.get(ref);
-        if(!snapshot.exists()) return;
-
-        const data=snapshot.data();
-        const players={...data.players};
-        const seat=Object.keys(players).find(key=>players[key]?.uid===state.uid);
-        if(!seat) return;
-
-        players[seat]=null;
-
-        if(!Object.values(players).some(Boolean)) {
-          transaction.delete(ref);
-        } else {
-          transaction.update(ref,{
-            players,board:Array(9).fill(""),status:"waiting",
-            currentPlayer:"X",winner:null,winningCells:[],ready:[]
-          });
-        }
-      });
-    } catch(error) {
-      console.error(error);
-    }
-  }
-
-  stopListening();
-  state.room="";
-  state.symbol="";
-  sessionStorage.removeItem("nexusRoom");
-  ui.countdown.hidden=true;
-  setScreen("home");
-  toast("Você saiu da sala.");
-}
-
-async function initialize() {
-  try {
-    setStatus("Conectando Firebase",false,true);
-    await signIn();
-    setStatus("Firebase conectado",true);
-
-    if (state.room) {
-      const snapshot=await getDoc(roomRef());
-
-      if (snapshot.exists()) {
-        const data=snapshot.data();
-        const me=Object.values(data.players||{}).find(player=>player?.uid===state.uid);
-
-        if (me) {
-          state.name=me.name;
-          subscribeRoom(state.room);
-          return;
-        }
-      }
-
-      state.room="";
-      sessionStorage.removeItem("nexusRoom");
-    }
-  } catch(error) {
-    console.error(error);
-    setStatus("Firebase indisponível");
-    toast(explainError(error),"error");
+  }catch(x){
+    console.error(x);u.connection.textContent="Firebase indisponível";
+    note(err(x),"error");
   }
 }
 
-$("#createForm").addEventListener("submit",event=>{
-  event.preventDefault();
-  createRoom();
-});
-
-$("#joinForm").addEventListener("submit",event=>{
-  event.preventDefault();
-  joinRoom();
-});
-
-ui.code.addEventListener("input",()=>{
-  ui.code.value=ui.code.value.replace(/[^a-z0-9]/gi,"").toUpperCase();
-});
-
-$("#copyWaiting").addEventListener("click",copyRoom);
-$("#copyGame").addEventListener("click",copyRoom);
-$("#leaveWaiting").addEventListener("click",leaveRoom);
-$("#leaveGame").addEventListener("click",leaveRoom);
-$("#again").addEventListener("click",playAgain);
-
-$("#sound").addEventListener("click",()=>{
-  state.sound=!state.sound;
-  $("#sound").setAttribute("aria-pressed",state.sound);
-  $("#sound").textContent=state.sound?"♫":"⌁";
-});
-
-$("#share").addEventListener("click",async()=>{
-  if(navigator.share) {
-    try {
-      await navigator.share({
-        title:"TIC TAC NEXUS",
-        text:"Entre na minha sala: "+state.room,
-        url:location.href
-      });
-    } catch {}
-  } else {
-    copyRoom();
-  }
-});
-
-initialize();
+start();
 </script>
 </body>
 </html>
